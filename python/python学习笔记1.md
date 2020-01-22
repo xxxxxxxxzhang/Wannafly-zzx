@@ -1,5 +1,7 @@
 # python学习笔记1
 
+
+
 ## 下载python
 
 去官网[下载]( https://www.python.org/downloads/windows/ )
@@ -134,4 +136,16 @@
 
 ![](img/1.png)
 
-# 需要登录的情况下
+
+
+### 为什要伪装浏览器的header
+
+
+
+有些网站会检查你是不是真的浏览器访问，还是机器自动访问的。这种情况，加上User-Agent，表明你是浏览器访问即可。服务器会识别headers中的referer是不是它自己，如果不是，有的服务器不会响应，所以我们还可以在headers中加入referer。
+
+以谷歌浏览器的开发者工具为例（右键检查或Ctrl+Shift+I），刷新页面，在**Network模块**中我们点开左边**name**中项目，可以看到一些信息，其中我们就可以看到**Referer**和**User-Agen**t的信息，把它们复制下。
+
+### 参考
+
+[BeautifulSoup解析豆瓣即将上映的电影信息]( https://www.jianshu.com/p/c64fe2a20bc9 )

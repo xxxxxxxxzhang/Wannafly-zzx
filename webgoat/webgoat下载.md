@@ -26,16 +26,20 @@
 
      * `iptables`在该系统中检查端口22是否被阻塞。只需允许端口进入`iptables`，然后检查即可。 
 
-       ```
+       ```bash
        sudo iptables -A INPUT -p tcp --dport ssh -j ACCEPT
        ```
 
      *  否则`ssh`，通过编辑将端口号从22 更改为2222 
 
-       ```
+       ```bash
        vi etc/ssh/sshd_config    
        /etc/init.d/ssh restart.
        ```
+
+5. 复制虚拟机到其他vritualbox上后NAT网卡不能用
+
+   解决办法，virtualbox全局设置->网络->添加NAT网络
 
 * 安装docker
 
@@ -71,3 +75,4 @@
   ```
 
 * 
+

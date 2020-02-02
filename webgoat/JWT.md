@@ -24,6 +24,14 @@ token是计算机术语：令牌，令牌是一种能够控制站点占有媒体
 
  JSON Web Token（JWT）是目前最流行的跨域身份验证解决方案。
 
+JSON Web Token (JWT)是一个开放标准(RFC 7519)，它定义了一种紧凑的、自包含的方式，用于作为JSON对象在各方之间安全地传输信息。该信息可以被验证和信任，因为它是数字签名的。 
+
+一条JWT是被base64编码过的，包含了三段，头部，声明（也称payload），签名。中间以“.”间隔。
+
+
+
+![](img/JWT.png)
+
  该令牌采用base64编码，由三个部分组成header.claim .signature。此令牌的解码版本为: 
 
 ```
@@ -64,6 +72,22 @@ Session方式存储用户id的最大弊病在于要占用大量服务器内存�
 
 
 
+
+
+## 更新访问令牌
+
+ 通常，令牌有两种类型：访问令牌和刷新令牌。 
+
+访问令牌用于对服务器进行API调用。  访问令牌的寿命有限，这就是刷新令牌的使用期限。一旦访问令牌不再有效，我就可以向服务器发出请求，以通过提供刷新令牌来获取新的访问令牌。
+
+刷新令牌可以过期，但是它们的寿命更长。 这解决了用户必须再次使用其凭证进行认证的问题。  是否使用刷新令牌和访问令牌取决于您在选择使用哪些令牌时需要牢记的几点。 
+
+如您所见，刷新令牌是一个随机字符串，服务器可以跟踪（在内存中或存储在数据库中）以便将刷新令牌与授予该刷新令牌的用户进行匹配。  因此，在这种情况下，只要访问令牌仍然有效，我们就可以说是“无状态”会话，服务器端无需设置用户会话，令牌是自包含的。  当访问令牌不再有效时，服务器需要查询存储的刷新令牌，以确保不会以任何方式阻止该令牌。 
+
+
+
+每当攻击者获得访问令牌的保留权时，它仅在一定时间内有效（例如10分钟）。 然后，攻击者需要刷新令牌才能获取新的访问令牌。  这就是为什么刷新令牌需要更好的保护。 也可以使刷新令牌无状态，但这意味着查看用户是否吊销令牌将变得更加困难。  服务器进行所有验证后，它必须向客户端返回一个新的刷新令牌和一个新的访问令牌。 客户端可以使用新的访问令牌进行API调用
+
 # (A2）Broken Authentication
 
 ## Authentication Bypasses
@@ -94,11 +118,137 @@ Session方式存储用户id的最大弊病在于要占用大量服务器内存�
 
 <img src="img/2FA-q.png" />
 
-<img src="img/2FA-a.png" style="zoom:80%;" />
+<img src="img/2FA-a.png" style="zoom:80%;" />*
 
 
 
 ## JWT tokens
+
+* lesson 4
+
+**JWT signing**
+
+ 每个JWT令牌至少应在发送给客户端之前进行签名，如果未签名，则客户端应用程序将能够更改令牌的内容。  签名规范在此处定义，此处将描述您可以使用的特定算法。从本质上讲，您可以使用“具有SHA-2功能的HMAC”或“具有`RSASSA-PKCS1-v1_5 / ECDSA / RSASSA-PSS`的数字签名”功能对 令牌。 
+
+一开始先以用户的身份登入查看一下结果，然后点击刷新的符号发现是没有权限的，用bp也拦截不到请求，然后试一下删除按钮也是权限不够但是能够拦截到请求，这就可以禅师从删除的请求下手。
+
+以tom身份登录，点击删除按钮，用bp拦截请求能看到access_token的参数，把拦截到JWT token去` https://jwt.io/#debugger `解析一下能看到`pyload`中`admin`字段的值是`false`，改成`true`。用新生成的token去重放攻击即可。
+
+* lesson5
+
+**JWT cracking**（未完成）
+
+ 通过具有SHA-2功能的HMAC，您可以使用密钥来签名和验证令牌。 一旦找出了这个密钥，我们就可以创建一个新令牌并对其进行签名。 因此，密钥足够强大非常重要，这样暴力破解或字典攻击就不可行。 获得令牌后，就可以发起离线暴力破解或字典攻击 
+
+**任务**
+
+鉴于我们有以下令牌，请尝试找出秘密密钥并提交新密钥，并将用户名更改为WebGoat。
+
+```eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJXZWJHb2F0IFRva2VuIEJ1aWxkZXIiLCJhdWQiOiJ3ZWJnb2F0Lm9yZyIsImlhdCI6MTU4MDYwOTQ0NSwiZXhwIjoxNTgwNjA5NTA1LCJzdWIiOiJ0b21Ad2ViZ29hdC5vcmciLCJ1c2VybmFtZSI6IlRvbSIsIkVtYWlsIjoidG9tQHdlYmdvYXQub3JnIiwiUm9sZSI6WyJNYW5hZ2VyIiwiUHJvamVjdCBBZG1pbmlzdHJhdG9yIl19.psJ9VjPVyN3Wc7KgIlwjHRWFWr1WRd7x1TaRDYv2LDM```
+
+要想伪造JWT token就要知道签名密钥，密钥可以通过爆破找到签名密钥，可取GitHub上去找字典，下面是爆破的一个脚本，脚本是参考网上的，找出密钥后再通过` https://jwt.io/#debugger `修改用户名为`WebGoat`
+
+```
+1.若签名直接校验 **成功**（原文为失败，猜测为作者手误），则 key_ 为有效密钥；
+
+2.若因数据部分预定义字段错误（jwt.exceptions.ExpiredSignatureError, jwt.exceptions.InvalidAudienceError, jwt.exceptions.InvalidIssuedAtError, jwt.exceptions.InvalidIssuedAtError, jwt.exceptions.ImmatureSignatureError）导致校验失败，说明并非密钥错误导致，则 key_ 也为有效密钥；
+
+3.若因密钥错误（jwt.exceptions.InvalidSignatureError）导致校验失败，则 key_ 为无效密钥；
+
+4.若为其他原因（如，JWT 字符串格式错误）导致校验失败，根本无法验证当前 key_ 是否有效。
+```
+
+以下为python代码，爆破密钥
+
+```python
+import jwt
+import termcolor
+if __name__ == "__main__":
+    jwt_str = R'eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJXZWJHb2F0IFRva2VuIEJ1aWxkZXIiLCJhdWQiOiJ3ZWJnb2F0Lm9yZyIsImlhdCI6MTU4MDYxNTg3NywiZXhwIjoxNTgwNjE1OTM3LCJzdWIiOiJ0b21Ad2ViZ29hdC5vcmciLCJ1c2VybmFtZSI6IlRvbSIsIkVtYWlsIjoidG9tQHdlYmdvYXQub3JnIiwiUm9sZSI6WyJNYW5hZ2VyIiwiUHJvamVjdCBBZG1pbmlzdHJhdG9yIl19.eohzwETD1VzctCXQ3A8ESPzAoZ7u5DDCw04M79wgefc'
+    with open('D:\pycharm\pass.txt') as f:
+        for line in f:
+            key_ = line.strip()
+            try:
+                jwt.decode(jwt_str, verify=True, key=key_)
+                print('\r', '\bbingo! found key -->', termcolor.colored(key_, 'green'), '<--')
+                break
+            except (jwt.exceptions.ExpiredSignatureError, jwt.exceptions.InvalidAudienceError, jwt.exceptions.InvalidIssuedAtError, jwt.exceptions.InvalidIssuedAtError, jwt.exceptions.ImmatureSignatureError):
+                print('\r', '\bbingo! found key -->', termcolor.colored(key_, 'green'), '<--')
+                break
+            except jwt.exceptions.InvalidSignatureError:
+                print('\r', ' ' * 64, '\r\btry', key_, end='', flush=True)
+                continue
+        else:
+            print('\r', '\bsorry! no key be found.')
+```
+
+修改用户名`uername`为`WebGoat`，加密方式改为`shipping`
+
+![io-1](img/io-1.png)
+
+能得到改变username后的token ，复制到题目中提交
+
+![io-2](img/io-2.png)
+
+可以直接用在编译器去编码token，或者也可用python3的PyJWT获取JWT
+
+```python
+import jwt
+
+# payload
+token_dict = {
+    "iss": "WebGoat Token Builder",
+    "aud": "webgoat.org",
+    "iat": 1580615877,
+    "exp": 1580615937,
+    "sub": "tom@webgoat.org",
+    "username": "WebGoat",
+    "Email": "tom@webgoat.org",
+    "Role": ["Manager", "Project Administrator"]
+}
+key = "shipping"
+# headers
+headers = {
+    "alg": "HS256"
+}
+# 调用jwt库,生成json web token
+jwt_token = jwt.encode(token_dict,  # payload, 有效载体
+                       key,
+                       algorithm="HS256",  # 指明签名算法方式, 默认是HS256，需要与headers中"alg"保持一致。
+                       headers=headers  # json web token 数据结构包含两部分, payload(有效载体), headers(标头)
+                       )
+print("jwt_token")
+print(jwt_token)
+
+```
+
+lesson7
+
+**Refreshing a token**
+
+访问令牌可以通过刷新令牌获取，此题是在通过刷新令牌获取访问令牌时没有检查刷新令牌和访问令牌的关联，这样就可以让我拿着自己的刷新令牌去刷新别人的访问令牌。因此，攻击者就可能获取旧的访问令牌。
+
+任务：
+
+通过去年的日志找到一种方法来订购这些书，让tom来支付
+
+解决方案：
+
+1.通过日志来获取tom之前的访问token修改token的失效日期，
+
+![refesh-token](img/refesh-token.png)
+
+![refesh-token-3](img/refesh-token-3.png)
+
+不用签名字段是，在发送清酒把token签名字段删掉不需要签名字段就可以，**但是.不能去掉**
+
+![refesh-token-1](D:\github-repositories\Wannafly-zzx\webgoat\img\refesh-token-1.png)
+
+2.点击check'out用bp拦截checkout请求，修好Authonization字段
+
+![refesh-token-2](img\refesh-token-2.png)
+
+# 参考
 
 
 
@@ -107,3 +257,7 @@ Session方式存储用户id的最大弊病在于要占用大量服务器内存�
  [八幅漫画理解使用JSON Web Token设计单点登录系统 ——— by John Wu](http://blog.leapoahead.com/2015/09/07/user-authentication-with-jwt/) 
 
  [跨站脚本攻击（XSS攻击）](http://www.cnblogs.com/bangerlee/archive/2013/04/06/3002142.html)
+
+[负载均衡器]( https://zhuanlan.zhihu.com/p/32841479 )
+
+/ https://www.jianshu.com/p/d2f9815758f4 

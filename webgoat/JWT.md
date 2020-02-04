@@ -1,4 +1,4 @@
-# 基础概念
+基础概念
 
 
 
@@ -136,7 +136,7 @@ Session方式存储用户id的最大弊病在于要占用大量服务器内存�
 
 * lesson5
 
-**JWT cracking**（未完成）
+**JWT cracking**
 
  通过具有SHA-2功能的HMAC，您可以使用密钥来签名和验证令牌。 一旦找出了这个密钥，我们就可以创建一个新令牌并对其进行签名。 因此，密钥足够强大非常重要，这样暴力破解或字典攻击就不可行。 获得令牌后，就可以发起离线暴力破解或字典攻击 
 
@@ -145,6 +145,16 @@ Session方式存储用户id的最大弊病在于要占用大量服务器内存�
 鉴于我们有以下令牌，请尝试找出秘密密钥并提交新密钥，并将用户名更改为WebGoat。
 
 ```eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJXZWJHb2F0IFRva2VuIEJ1aWxkZXIiLCJhdWQiOiJ3ZWJnb2F0Lm9yZyIsImlhdCI6MTU4MDYwOTQ0NSwiZXhwIjoxNTgwNjA5NTA1LCJzdWIiOiJ0b21Ad2ViZ29hdC5vcmciLCJ1c2VybmFtZSI6IlRvbSIsIkVtYWlsIjoidG9tQHdlYmdvYXQub3JnIiwiUm9sZSI6WyJNYW5hZ2VyIiwiUHJvamVjdCBBZG1pbmlzdHJhdG9yIl19.psJ9VjPVyN3Wc7KgIlwjHRWFWr1WRd7x1TaRDYv2LDM```
+
+此题目**思路**：
+
+要找到令牌的签名密钥然后修改用户名，再用找到的密钥加密。
+
+解决**方法**：
+
+token解析后可以看到header和pyload部分
+
+![Token-cracking](img/Token-cracking.png)
 
 要想伪造JWT token就要知道签名密钥，密钥可以通过爆破找到签名密钥，可取GitHub上去找字典，下面是爆破的一个脚本，脚本是参考网上的，找出密钥后再通过` https://jwt.io/#debugger `修改用户名为`WebGoat`
 
@@ -182,13 +192,17 @@ if __name__ == "__main__":
             print('\r', '\bsorry! no key be found.')
 ```
 
-修改用户名`uername`为`WebGoat`，加密方式改为`shipping`
+通过爆破可以找到签名密钥为business
 
-![io-1](img/io-1.png)
+![io-1](img/io-3.png)
 
-能得到改变username后的token ，复制到题目中提交
+修改用户名`uername`为`WebGoat`，加密方式改为business
 
-![io-2](img/io-2.png)
+![](img/io-1.png)
+
+在这里犯了一个错误，没有exp的**失效日期一直没有改导致提交一直失败**，修改username后的token ，复制到题目中提交即可以通过了！
+
+**扩展**：
 
 可以直接用在编译器去编码token，或者也可用python3的PyJWT获取JWT
 
@@ -222,6 +236,8 @@ print(jwt_token)
 
 ```
 
+
+
 lesson7
 
 **Refreshing a token**
@@ -248,6 +264,72 @@ lesson7
 
 ![refesh-token-2](img\refesh-token-2.png)
 
+## Final challenges
+
+题目中要求Jerry删除Tom 的账户，解题思路：
+
+要删除Tom的账户就要伪造Tom的token
+
+点击tom账户的delete按钮用bp拦截请求看看交互内容，是发送了一个post的侵害就，url里附带了当前账户的token，由于这个token不是tom的所以在删除Tom账户的时候提示错误：
+
+把token解析可以看到头部有一个kid字段
+
+![tom2](img/tom2.png)
+
+
+
+从网上找到了用到这个字段源码
+
+![tom](img/tom.png)
+
+那他是干什么的呢？
+
+```java
+Jwt jwt = Jwts.parser().setSigningKeyResolver(new SigningKeyResolverAdapter() {...}).parse(token); 
+```
+
+简单看一下这一段是，在我们提交token时用来解析token的，使用setSigningKeyResolver方法指定了一个解析器来获取一个key，方法里是用了kid来查找数据库获取这个key，并且数据库的select 命令指示简单的拼接，没有做任何过滤：
+
+```sql
+"SELECT key FROM jwt_keys WHERE id = '" + kid + "'"
+```
+
+这个key就是用来签名用的盐，如果知道了这个key自然就很轻松的伪造token了。所以这里可以通过注入来“指定”一个我们自定义的key值。
+
+```text
+"kid": "webgoat_key"
+```
+
+ secret 从数据库取出来时还经历了一次Base64.decode() ， 所以，我们这里注入的时候记得注入一个base64编码过后的secret key
+
+**用union注入**
+
+```sql
+fff' union select 'enp6' FROM jwt_keys where id='webgoat_key
+```
+
+
+
+服务器组合后的语句
+
+```sql
+"SELECT key FROM jwt_keys WHERE id = 'fff' union select 'enp6' FROM jwt_keys where id='webgoat_key'"
+```
+
+ 因为fff这个id不存在，所以只会返回union后的select结果也就是enp6，这个enp6是base64加密后的zzz，因为webgoat代码里很显然是把数据库查询的结果做了一个decode，反推一下数据库里面存的应该是base64后的值。
+
+然后重新base64和签名，修改为Tom的账户，
+
+![tom-final](img/tom-final.png)
+
+
+
+![tom-final2](img/tom-final2.png)
+
+更换token，把请求发送过去正确 
+
+![tom-final3](img/tom-final3.png)
+
 # 参考
 
 
@@ -260,4 +342,6 @@ lesson7
 
 [负载均衡器]( https://zhuanlan.zhihu.com/p/32841479 )
 
-/ https://www.jianshu.com/p/d2f9815758f4 
+https://www.jianshu.com/p/d2f9815758f4 
+
+[JWT Refresh Token Manipulation](https://emtunc.org/blog/11/2017/jwt-refresh-token-manipulation/ ) 

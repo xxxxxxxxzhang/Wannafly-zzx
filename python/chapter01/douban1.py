@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup  # 从bs4引入BeautifulSoup
 
-#请求网页
+# 请求网页
 url = "https://movie.douban.com/cinema/later/chengdu/"  # URL不变
 # 新增伪装成浏览器的header
 fake_headers = {
@@ -26,7 +26,7 @@ for each_movie in all_movies.find_all('div', class_="item"):  # 从最大的div�
     all_img_tag = each_movie.find_all('img')
     movie_name = all_a_tag[1].text
     moive_href = all_a_tag[1]['href']
-    pic_hef=all_img_tag[0]['src']
+    pic_hef = all_img_tag[0]['src']
     movie_date = all_li_tag[1].text
     movie_type = all_li_tag[1].text
     movie_area = all_li_tag[2].text

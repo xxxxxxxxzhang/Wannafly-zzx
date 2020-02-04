@@ -51,8 +51,6 @@
 
 * jupyter(简单方便的写代码工具) 
 
-   pip3 install jupyter 
-
   - 简介
 
     Jupyter Notebook（此前被称为 IPython notebook）是一个交互式笔记本，支持运行 40 多种编程语言。

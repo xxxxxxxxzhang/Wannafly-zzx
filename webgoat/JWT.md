@@ -326,7 +326,7 @@ fff' union select 'enp6' FROM jwt_keys where id='webgoat_key
 
 ![tom-final2](img/tom-final2.png)
 
-更换token，把请求发送过去正确 
+更换token，把请求发送过去正确！ 
 
 ![tom-final3](img/tom-final3.png)
 

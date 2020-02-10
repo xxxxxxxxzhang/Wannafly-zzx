@@ -18,6 +18,8 @@
 
 ### 什么是XML实体?
 
+XML都是固定好的
+
 XML实体允许定义将在解析XML文档时由内容替换的标记。一般有三种实体:
 
 - 内部实体
@@ -26,12 +28,14 @@ XML实体允许定义将在解析XML文档时由内容替换的标记。一般�
 
 - 参数实体。
 
-一个实体必须在文档类型定义(DTD)中创建，让我们从一个例子开始:
+一个实体必须在文档类型定义(Document Type Definition,DTD)中创建，让我们从一个例子开始:
 
 ```xml
 <?xml version="1.0" standalone="yes" ?>
+
 <!DOCTYPE author [
-  <!ELEMENT author (#PCDATA)>
+  <!ELEMENT author (#PCDATA)>  <-- #PCDATA 类型-->
+  <!ELEMENT 班级 (学生+)>
   <!ENTITY js "Jo Smith">
 ]>
 <author>&js;</author>

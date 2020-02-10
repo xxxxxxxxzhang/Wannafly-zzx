@@ -1,22 +1,20 @@
 # 第四章：shell脚本编程基础
 
-```
-
-```
+ [https://github.com/CUCCS/linux-2019-jackcily/blob/08e0c9aaead96d33e11d6b5c24d27a12cf7c1463/job4/%E5%AE%9E%E9%AA%8C%E5%9B%9B%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A.md](https://github.com/CUCCS/linux-2019-jackcily/blob/08e0c9aaead96d33e11d6b5c24d27a12cf7c1463/job4/实验四实验报告.md) 
 
 * 任务一：用bash编写一个图片批处理脚本，实现以下功能：
      *  支持命令行参数方式使用不同功能
      *  支持对指定目录下所有支持格式的图片文件进行批处理
       *  支持以下常见图片批处理功能的单独使用或组合使用
-          
+         
           * 支持对`jpeg`格式图片进行图片质量压缩
           
             
           
            * 支持对`jpeg/png/svg`格式图片在保持原始宽高比的前提下压缩分辨率
+             
                
-               
-               
+             
           * 支持对图片批量添加自定义文本水印
           
           * 支持批量重命名（统一添加文件名前缀或后缀，不影响原始文件扩展名）
@@ -28,6 +26,127 @@
             for %f in (*.jpg) do convert “%f” “%~nf.png
           
             for %f in (*.svg) do convert “%f” “%~nf.png
+            
+            ```bash
+            #!/bin/bash
+            workDir=`pwd`
+            
+            # flags
+            compress=0
+            resize=0
+            watermark=0
+            rename=0
+            convert=0
+            
+            # args
+            watermarkText=""
+            renameText=""
+            
+            usage() {
+                echo "Usage:"
+                echo "  ch4_task_1.sh [-c] [-r] [-w TEXT] [-R SUFFIX] [-C]"
+                echo "Description:"
+                echo "  -c 支持对jpeg格式图片进行图片质量压缩"
+                echo "  -r 支持对jpeg/png/svg格式图片在保持原始宽高比的前提下压缩分辨率"
+                echo "  -w 支持对图片批量添加自定义文本水印"
+                echo "  -R 支持批量重命名（统一添加文件名后缀，不影响原始文件扩展名）"
+                echo "  -C 支持将png/svg图片统一转换为jpg格式图片"
+                exit -1
+            }
+            
+            
+            while getopts 'hcrw:R:C' OPT; do
+                case $OPT in
+                    h) usage;;
+                    c) compress=1;;
+                    r) resize=1;;
+                    w) watermark=1; watermarkText=$OPTARG;;
+                    R) rename=1; renameText=$OPTARG;;
+                    C) convert=1;;
+                    ?) usage;;
+                esac
+            done
+            # shift $(($OPTIND - 1))
+            # file=$1
+            
+            if [ -d "$workDir" ]; then
+                for zfile in $(find *.JPG *.jpg *.png *.PNG *.svg *.SVG 2>/dev/null); do
+                    if [[ compress -eq 1 ]]; then
+                        $(convert ${zfile} -quality 60 ${zfile})
+                    fi
+                    if [[ resize -eq 1 ]]; then
+                        $(convert $zfile -resize 75%x75% ${zfile})
+                    fi
+                    if [[ watermark -eq 1 ]]; then
+                        $(convert $zfile -fill red -pointsize 25 -annotate +50+50 $watermarkText $zfile)
+                    fi
+                    if [[ rename -eq 1 ]]; then
+                        filename=${zfile%%.*}
+                        ext=${zfile##*.}
+                        $(mv $zfile "${filename}${renameText}.${ext}")
+                    elif [[ convert -eq 1 ]]; then
+                        filename=${zfile%%.*}
+                        $(convert $zfile "${filename}.jpg")
+                    fi
+                done
+            fi
+            ```
+            
+            ```bash
+            #!/bin/bash
+            #输出帮助信息
+            useage()   
+            {
+              echo "Useage:bash test.sh  -d <directory> [option|option]"
+              echo "options:"
+              echo "  -d [directory]                想处理文本的文件路径"
+              echo "  -c                            png/svg -> jpg"
+              echo "  -r|--resize [width*height|width]    保持某个压缩比进行图像压缩 700x700 or 50%x50%   如果输入的是一个数值 就是保持原始纵横比进行压缩"
+              echo "  -q|--quality [number]          对jpg图像进行质量压缩"
+              echo "  -w|watermark [watermark]       添加水印"
+              echo "  --prefix[prefix]               添加前缀"
+              echo "  --postfix[postfix]             添加后缀"
+            }
+            
+            while true ; do   
+                case "$1" in
+                
+                    -c) C_FLAG="1" ; shift ;;
+                    
+                    -r|--resize) R_FLAG="1";
+                        case "$2" in
+                            "") shift 2 ;;
+                            *)RESOLUTION=$2 ; shift 2 ;;
+                        esac ;;
+                        
+                    --help) H_FLAG="1"; shift ;;
+                    
+                    -d|--directory)
+                        case "$2" in 
+                            "") shift 2 ;;
+                             *) DIR=$2 ; shift 2 ;;
+                        esac ;;
+                        
+                    -q|--quality) Q_FLAG="1";
+                        case "$2" in
+                            "") shift 2 ;;
+                             *) quality=$2; shift 2 ;;  #todo if the arg is integer
+                        esac ;;
+                        
+                    -w|--watermark)W_FLAG="1"; watermark=$2; shift 2 ;;
+                    
+                    --prefix) PREFIX=$2; shift 2;;
+                    
+                    --postfix) POSTFIX=$2; shift 2 ;;
+                            
+                    --) shift ; break ;;
+                    *) echo "Internal error!" ; exit 1 ;;
+                esac
+            done
+            useage()   
+            ```
+            
+            
 
 ```shell
 #!/bin/bash
@@ -119,25 +238,22 @@ for CURRENT_IMAGE in $images; do
      
      #运行拼凑出来的指令
      eval $temp     
-     #echo $temp
+     echo $temp
 done
 
 exit 0
 
 }
-
-#   $@指代命令行上的所有参数
+# $@指代命令行上的所有参数
 # -o 后面接短参数  没有冒号:开关指令 一个冒号:需要参数  两个冒号:参数可选
-## -o cr:d:q:w:   c是可选参数 其他都必须跟一个选项值
+# -o cr:d:q:w:   c是可选参数 其他都必须跟一个选项值
 # -l 后面接长选项列表
 # -n 指定那=哪个脚本处理的这个参数
 
 TEMP=`getopt -o cr:d:q:w: --long quality:arga,directory:,watermark:,prefix:,postfix:,help,resize: -n 'test.sh' -- "$@"`
-
 # -- 保证后面的字符串不直接被解析
 #set会重新排列参数顺序 这些值在 getopt中重新排列过了
 eval set -- "$TEMP"
-
 #shift用于参数左移 shift n 前n位都会被销毁
 while true ; do   
     case "$1" in
@@ -174,11 +290,38 @@ while true ; do
         *) echo "Internal error!" ; exit 1 ;;
     esac
 done
-
-
 main
 #todo  检查参数类型
 ```
+
+查看图片大小`indentify`：
+
+![](img/compare-large.png)
+
+shift命令用于对参数的移动（左移），通常用于再不知道传入参数的情况下遍历灭一个参数然后进行相应的处理
+
+例如：
+
+```bash
+#!/usr/bin/env bash
+
+while [ $# != 0 ];do
+echo "第一个参数为：$1,参数个数为：$#"
+shift
+done
+```
+
+ 输入如下命令运行：run.sh a b c d e f 
+
+结果：
+
+![](img/shift.png)
+
+
+
+ getopt命令可以接受一系列任意形式的命令行选项和参数，并自动将它们转换成适当的格式。格式如下： 
+
+` getopt optstring parameters `
 
 * 任务二：用bash编写一个文本批处理脚本，对以下附件分别进行批量处理完成相应的数据统计任务： 
   * 2014世界杯运动员数据

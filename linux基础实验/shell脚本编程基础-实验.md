@@ -204,7 +204,7 @@ function_name () compound-command [ redirections ]
 
 函数调用、传参和参数处理
 
-```
+```bash
 function function_B {
   echo "Function B."
 }
@@ -220,3 +220,11 @@ function_A "Function A."     # Function A.
 function_B                   # Function B.
 adder 12 56                  # 68
 ```
+
+
+
+
+
+# 参考
+
+[Shell脚本编程30分钟入门]( https://github.com/qinjx/30min_guides/blob/master/shell.md )

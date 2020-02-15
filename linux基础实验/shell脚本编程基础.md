@@ -209,183 +209,241 @@ done
     * 年龄最大的球员是谁？年龄最小的球员是谁？
 
 ```shell
+#以\t'为分隔符 找到第六行
+age=$(awk -F '\t' '{print $6}' worldcupplayerinfo.tsv)
+awk -F '\t' '{print $6}' worldcupplayerinfo.tsv
+	sum=0
+	age_count1=0
+	age_count2=0
+	age_count3=0
+
+	for num in $age
+	do
+	    if [ "$num" != 'Age' ] ; then #去掉第一行
+      		let sum+=1
+
+			if [ "$num" -lt 20 ] ; then 
+		    	# let age_count1+=1  
+		    	age_count1=$((${age_count1}+1))
+			fi
+
+      		if [ "$num" -ge 20 ] && [ "$num" -le 30 ] ; then 
+		    	let age_count2+=1
+                #echo "age_count2=${age_count2} num=${num}"
+			fi
+
+      		if [ "$num" -gt 30 ] ; then 
+		    	let age_count3+=1  
+			fi
+
+         fi
+	done
+	
+echo "年龄统计情况： "
+echo "<20岁球员数量:${age_count1} ，所占百分比为$(echo "scale=2; ${age_count1}*100/${sum}" | bc)%"
+echo "[20-30]的球员数量:${age_count2} ，所占百分比为$(echo "scale=2; ${age_count2}*100/${sum}" | bc)%"
+echo ">30岁的球员数量:${age_count3} ，所占百分比为$(echo "scale=2; ${age_count3}*100/${sum}" | bc)%"
+
+#位置统计
+position=$(awk -F '\t' '{print $5}' worldcupplayerinfo.tsv)
+
+position_count_Goalie=0;
+position_count_Defender=0
+position_count_Midfielder=0
+position_count_Forward=0
+
+	for pos in $position
+	do
+	#echo "pos是:$pos"
+	   		if [ "$pos" == 'Forward' ] ; then
+      		let position_count_Forward+=1
+ 			fi
+			if [ "$pos" == 'Midfielder' ] ; then 
+		    	# let age_count1+=1  
+		    	position_count_Midfielder=$((${position_count_Midfielder}+1))
+			fi
+
+      		if [ "$pos" == 'Defender' ]; then 
+		    	let position_count_Defender+=1
+                #echo "position_count_Defender=${position_count_Defender}"
+			fi
+
+      		if [ "$pos" = 'Goalie' ] ; then 
+		    	let position_count_Goalie+=1  
+			fi
+
+         
+	done
+echo "位置统计情况： "
+echo "Forward位球员数量:${position_count_Forward} ，所占百分比为$(echo "scale=2; ${position_count_Forward}*100/${sum}" | bc)%"
+echo "Midfielder位球员数量:${position_count_Midfielder} ，所占百分比为$(echo "scale=2; ${position_count_Midfielder}*100/${sum}" | bc)%"
+echo "Defender位球员数量:${position_count_Defender} ，所占百分比为$(echo "scale=2; ${position_count_Defender}*100/${sum}" | bc)%
+echo "Defender位球员数量:${position_count_Goalie} ，所占百分比为$(echo "scale=2; ${position_count_Goalie}*100/${sum}" | bc)%
+
+#名字长短
+namelen=$(awk -F '\t' '{print $9}' worldcupplayerinfo.tsv)
+min=999
+max=0
+mintemp=''
+maxtemp=''
+for len in $namelen
+do
+	echo "len:${len},长度：${#len}"
+	if [ ${#len} -lt $min ] ; then
+		echo "min:${min}"
+	 	min=${#len}
+	 	mintemp=${len}
+	 	echo "mim:${min} 短名字:${len}"
+	fi
+	if [ ${#len} -gt $max ] ; then
+		echo "max:${max}"
+	 	max=${#len}
+	 	maxtemp=${len}
+	 	echo "max:${max} 长名字:${maxtemp}"
+	fi
+	
+done
+  
+echo "找出最长最短的名字："
+echo "最长名字：${maxtemp},长度:${max}"
+echo "最短名字：${mintemp},长度：${min}"
+#年纪大小
+agenum=$(awk -F '\t' '{print $6}' worldcupplayerinfo.tsv)
+young=999
+old=0
+# echo "agenum:${agenum}"
+for ages in $agenum
+do
+
+	if [ $ages -lt $young ] ; then
+		 young=$ages
+	fi
+	if [ $ages -gt $old ] ; then
+    	old=$ages
+	fi
+done
+
+echo "找出最大最小的年龄："
+echo "最大：${old}"
+echo "最小：${young}"
+```
+
+**几个点**：
+
+* **bc命令**是一种支持任意精度的交互执行的计算器语言。bash内置了对整数四则运算的支持，但是并不支持浮点运算，而bc命令可以很方便的进行浮点运算，当然整数运算也不再话下。
+
+* [awk分隔符]( https://www.zsythink.net/archives/1357 ) 
+
+* **shell脚本中大于，大于等于，小于，小于等于、不等于的表示方法**
+
+  症状：shell中大于，大于等于，小于等于，lt,gt ,ne,ge,le 很对应。
+
+  应对方法：
+
+  大于 -gt (greater than)
+  小于 -lt (less than)
+  大于或等于 -ge (greater than or equal)
+  小于或等于 -le (less than or equal)
+  不相等 -ne （not equal）
+
+* 注意空格  `      		if [ "$pos" == 'Defender' ]; then `每个字符都要有空格
+
+* 在赋值的时候与等号不能有空格
+
+  
+
+
+
+```bash
 #!/bin/bash
 
-age_count()
-{
-#从第二行开始读取
-#gawk -F：'{print $1}' /etc/passwd -F也是用来设定读入文件分割符为“:”
-#sort按照倒序进行排序
-#BEGIN模式指定处理文本前需要执行的操作，END模式指定了处理完所有的行之后所要执行的操作
-#读取文件将文件分开
-a=$(more +2  job4/worldcupplayerinfo.tsv|awk -F\\t '{print $6}'|sort -r|awk 'BEGIN{split("<20 20-30 >30",b)}{if($1<20)a[1]++;if($1>=20&&$1<=30)a[2]++;if($1>30)a[3]++}END{for(i in a)print a[i]}')
+count=0  # 总球员数
 
-#计算出总人数
-sum=0
-age=($a)
-for i in $a ;do
-   sum=$(($sum+$i)) 
-done
+age_count_1=0  # 20岁以下
+age_count_2=0  # [20-30]
+age_count_3=0  # 30岁以上
 
-#计算出百分比
-a=("<20" "20-30" ">30")
-for i in `seq 0 2`;do
-b[$i]=$(echo "scale=2; 100*${age[$i]} / $sum"|bc)
-done
+pos_count_forward=0
+pos_count_midfielder=0
+pos_count_defender=0
+pos_count_goalie=0
 
-echo -e "------统计不同年龄区间范围------"
-for i in `seq 0 2`;do
-echo -e "${a[$i]}  人数: ${age[$i]} 百分比: ${b[$i]}% \n "
-done
-}
+name_longest=""
+name_shortest=""
+name_longest_count=0
+name_shortest_count=100
 
+age_max_name=""
+age_min_name=""
+age_max=0
+age_min=100
 
-#uniq -c函数使用之前 使用 sort 命令使所有重复行相邻
-pos_count()
-{
-	a=$(more +2 job4/worldcupplayerinfo.tsv|awk -F\\t '{print $5}'|sort -r|uniq -c|awk '{print $1}')
-	b=$(more +2 job4/worldcupplayerinfo.tsv|awk -F\\t '{print $5}'|sort -r|uniq -c|awk '{print $2}')
-	sum=0
-	count=($a)
-	position=($b)
+input="worldcupplayerinfo.tsv"
 
-    #求和用于计算百分比
-	for i in $a ;do
-		sum=$(($sum+$i)) 
-	done
+first=0
 
-#遍历计算百分比
-i=0
-for n in ${count[@]};do
-b[$i]=$(echo "scale=2; 100*${n} / $sum"|bc)
-  i=$((i+1))
-done
-
-#进行输出打印
-echo -e "----统计不同场上位置的球员数量、百分比------"
-i=0
-for n in ${count[@]};do
-echo -e "位置: ${position[$i]}  数量: $n   百分比: ${b[$i]}% \n " 
-i=$((i+1))
-done
-}
-
-
-young()
-{
-#首先找出年龄最小的数值
-young=$(more +2 job4/worldcupplayerinfo.tsv | awk -F\\t 'BEGIN{young=100}{if($6<=young){young=$6}}END{print young}')
-
-#然后把所有年龄为该数值的名字取出
-temp="more +2 job4/worldcupplayerinfo.tsv | awk -F'\t' 'BEGIN{young="${young}";i=1}{if("'$6'"==young){name[i]="'$9'";i++}}END{for (a in name)print name[a]}'"
-
-name=$(eval -- $temp)
-
-echo -e "------年龄最小的球员是谁------\n"
-
-echo -e "最小的年龄是: ${young} "
-echo -e "名字是 : \n"
-IFS=$'\n' namearray=($name)
-for key in "${!namearray[@]}"; do echo "${namearray[$key]}"; done
+while IFS= read -r line || [[ -n "$line" ]]
+do
+    line=${line// /-}
+    array=(${line})
+    count=$((${count}+1))
+    # 跳过第一行
+    if [[ first -eq 0 ]]; then first=1; continue; fi 
+    # 统计年龄
+    if [[ ${array[5]} -lt 20 ]]; then
+        age_count_1=$((${age_count_1}+1))
+    elif [[ ${array[5]} -gt 30 ]]; then
+        age_count_3=$((${age_count_3}+1))
+    else
+        age_count_2=$((${age_count_2}+1))
+    fi
+    # 统计位置
+    if [[ "${array[4]}" = 'Forward' ]]; then
+        pos_count_forward=$((${pos_count_forward}+1))
+    elif [[ "${array[4]}" = 'Midfielder' ]]; then
+        pos_count_midfielder=$((${pos_count_midfielder}+1))
+    elif [[ "${array[4]}" = 'Defender' ]]; then
+        pos_count_defender=$((${pos_count_defender}+1))
+    else
+        pos_count_goalie=$((${pos_count_goalie}+1))
+    fi
+    # 统计最长最短名字
+    len=${#array[8]}
+    if [[ $len -lt $name_shortest_count ]]; then
+        name_shortest_count=$len
+        name_shortest=${array[8]}
+    elif [[ $len -gt $name_longest_count ]]; then
+        name_longest_count=$len
+        name_longest=${array[8]}
+    fi
+    # 统计年龄最大最小名字
+    if [[ ${array[5]} -lt $age_min ]]; then
+        age_min=${array[5]}
+        age_min_name=${array[8]}
+    elif [[ ${array[5]} -gt $age_max ]]; then
+        age_max=${array[5]}
+        age_max_name=${array[8]}
+    fi
 
 
-}
+done < "$input"
 
-old()
-{
-#计算方式和计算最小的年龄类似
-old=$(more +2 job4/worldcupplayerinfo.tsv | awk -F\\t 'BEGIN{old=0}{if($6>=old){old=$6}}END{print old}')
-
-temp="more +2 job4/worldcupplayerinfo.tsv | awk -F'\t' 'BEGIN{old="${old}";i=1}{if("'$6'"==old){name[i]="'$9'";i++}}END{for (a in name)print name[a]}'"
-
-
-name=$(eval -- $temp)
-
-echo -e "------年龄最大的球员是谁------\n"
-echo -e "最大年龄: ${old} "
-echo -e "名字是 : \n"
-
-IFS=$'\n' namearray=($name)
-for key in "${!namearray[@]}"; do echo "${namearray[$key]}"; done
-
-
-}
-
-longgest_name()
-{
-
-name=$(more +2 job4/worldcupplayerinfo.tsv | awk -F\\t '{print $9}') 
-long=0
-IFS=$'\n' namearray=($name)
-
-#首先求出名字最长的数值是多少
-for i in ${namearray[*]} ; do
-  count=$(echo -n $i | wc -m )
-  if [ $count -gt $long ] ; then
-    long=$count
-  fi
-done
-
-#然后遍历寻找长度符合条件的名字
-num=0
-longarray=()
-for i in ${namearray[*]} ; do
-  count=$(echo -n $i | wc -m)
-  if [ $count -eq $long ] ; then
-    longarray[${num}]=$i
-    num=$((num+1))
-  fi
-done
-
-echo -e "------最长的名字是-----  \n"
-echo -e "最长的名字长度: ${long} "
-echo -e "名字是: \n"
-
-for key in "${!longarray[@]}"; do echo "${longarray[$key]}"; done
-
-}
-
-#求解原理同上
-shortest_name()
-{
-
-name=$(more +2 job4/worldcupplayerinfo.tsv | awk -F\\t '{print $9}') 
-short=100
-IFS=$'\n' namearray=($name)
-
-for i in ${namearray[*]} ; do
-  count=$(echo -n $i | wc -m )
-  if [ $count -lt $short ] ; then
-    short=$count
-  fi
-done
-
-num=0
-shortarray=()
-for i in ${namearray[*]} ; do
-  count=$(echo -n $i | wc -m)
-  if [ $count -eq $short ] ; then
-    shortarray[${num}]=$i
-    num=$((num+1))
-  fi
-done
-
-echo -e "------最短名字数据------  \n"
-
-echo -e "最短名字长度: ${short} "
-echo -e "名字是 : \n"
-
-for key in "${!shortarray[@]}"; do echo "${shortarray[$key]}"; done
-
-}
-
-age_count
-pos_count
-longgest_name
-shortest_name
-old
-young
-
+echo "输入文件 [$input]"
+echo "------- 年龄统计 ------- "
+echo "20岁以下球员数量为${age_count_1} ，所占百分比为$(echo "scale=2; ${age_count_1}*100/${count}" | bc)%"
+echo "[20-30]的球员数量为${age_count_2} ，所占百分比为$(echo "scale=2; ${age_count_2}*100/${count}" | bc)%"
+echo "30岁以上的球员数量为${age_count_3} ，所占百分比为$(echo "scale=2; ${age_count_3}*100/${count}" | bc)%"
+echo "------- 位置统计 ------- "
+echo "位置是Forward的球员数量为${pos_count_forward} ，所占百分比为$(echo "scale=2; ${pos_count_forward}*100/${count}" | bc)%"
+echo "位置是Midfielder的球员数量为${pos_count_midfielder} ，所占百分比为$(echo "scale=2; ${pos_count_midfielder}*100/${count}" | bc)%"
+echo "位置是Defender的球员数量为${pos_count_defender} ，所占百分比为$(echo "scale=2; ${pos_count_defender}*100/${count}" | bc)%"
+echo "位置是Goalie的球员数量为${pos_count_goalie} ，所占百分比为$(echo "scale=2; ${pos_count_goalie}*100/${count}" | bc)%"
+echo "------- 最长名字和最短名字 -------"
+echo "最长名字的球员是${name_longest}"
+echo "最短名字的球员是${name_shortest}"
+echo "------- 最大年龄和最小年龄 -------"
+echo "最大年龄是${age_max}，球员是${age_max_name}"
+echo "最小年龄是${age_min}，球员是${age_min_name}"
 ```
 
 
@@ -780,3 +838,4 @@ RespStats
 [getopt和getopts的使用]( https://blog.csdn.net/wh211212/article/details/53750366 )
 
 [linux-2019-jackcily]( https://github.com/CUCCS/linux-2019-jackcily )
+

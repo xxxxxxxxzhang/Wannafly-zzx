@@ -211,7 +211,7 @@ done
 ```shell
 #以\t'为分隔符 找到第六行
 age=$(awk -F '\t' '{print $6}' worldcupplayerinfo.tsv)
-awk -F '\t' '{print $6}' worldcupplayerinfo.tsv
+#awk -F '\t' '{print $6}' worldcupplayerinfo.tsv
 	sum=0
 	age_count1=0
 	age_count2=0
@@ -238,7 +238,7 @@ awk -F '\t' '{print $6}' worldcupplayerinfo.tsv
 
          fi
 	done
-	
+echo "---------------------------------------------------------"	
 echo "年龄统计情况： "
 echo "<20岁球员数量:${age_count1} ，所占百分比为$(echo "scale=2; ${age_count1}*100/${sum}" | bc)%"
 echo "[20-30]的球员数量:${age_count2} ，所占百分比为$(echo "scale=2; ${age_count2}*100/${sum}" | bc)%"
@@ -274,6 +274,7 @@ position_count_Forward=0
 
          
 	done
+echo "---------------------------------------------------------"
 echo "位置统计情况： "
 echo "Forward位球员数量:${position_count_Forward} ，所占百分比为$(echo "scale=2; ${position_count_Forward}*100/${sum}" | bc)%"
 echo "Midfielder位球员数量:${position_count_Midfielder} ，所占百分比为$(echo "scale=2; ${position_count_Midfielder}*100/${sum}" | bc)%"
@@ -282,28 +283,29 @@ echo "Defender位球员数量:${position_count_Goalie} ，所占百分比为$(ec
 
 #名字长短
 namelen=$(awk -F '\t' '{print $9}' worldcupplayerinfo.tsv)
+IFS=$'\n' namearray=($namelen)
 min=999
 max=0
 mintemp=''
 maxtemp=''
-for len in $namelen
+for len in ${namearray[*]} 
 do
-	echo "len:${len},长度：${#len}"
+	#echo "len:${len},长度：${#len}"
 	if [ ${#len} -lt $min ] ; then
-		echo "min:${min}"
+		#echo "min:${min}"
 	 	min=${#len}
 	 	mintemp=${len}
-	 	echo "mim:${min} 短名字:${len}"
+	 	#echo "mim:${min} 短名字:${len}"
 	fi
 	if [ ${#len} -gt $max ] ; then
-		echo "max:${max}"
+		#echo "max:${max}"
 	 	max=${#len}
 	 	maxtemp=${len}
-	 	echo "max:${max} 长名字:${maxtemp}"
+	 	#echo "max:${max} 长名字:${maxtemp}"
 	fi
 	
 done
-  
+echo "---------------------------------------------------------"
 echo "找出最长最短的名字："
 echo "最长名字：${maxtemp},长度:${max}"
 echo "最短名字：${mintemp},长度：${min}"
@@ -347,238 +349,10 @@ echo "最小：${young}"
   不相等 -ne （not equal）
 
 * 注意空格  `      		if [ "$pos" == 'Defender' ]; then `每个字符都要有空格
-
-* 在赋值的时候与等号不能有空格
-
-  
+* 在赋值的时候与等号间不能有空格
+* 统计名字长度的时候，因为名字间有空格，需要把数组转换一下
 
 
-
-```bash
-#!/bin/bash
-
-count=0  # 总球员数
-
-age_count_1=0  # 20岁以下
-age_count_2=0  # [20-30]
-age_count_3=0  # 30岁以上
-
-pos_count_forward=0
-pos_count_midfielder=0
-pos_count_defender=0
-pos_count_goalie=0
-
-name_longest=""
-name_shortest=""
-name_longest_count=0
-name_shortest_count=100
-
-age_max_name=""
-age_min_name=""
-age_max=0
-age_min=100
-
-input="worldcupplayerinfo.tsv"
-
-first=0
-
-while IFS= read -r line || [[ -n "$line" ]]
-do
-    line=${line// /-}
-    array=(${line})
-    count=$((${count}+1))
-    # 跳过第一行
-    if [[ first -eq 0 ]]; then first=1; continue; fi 
-    # 统计年龄
-    if [[ ${array[5]} -lt 20 ]]; then
-        age_count_1=$((${age_count_1}+1))
-    elif [[ ${array[5]} -gt 30 ]]; then
-        age_count_3=$((${age_count_3}+1))
-    else
-        age_count_2=$((${age_count_2}+1))
-    fi
-    # 统计位置
-    if [[ "${array[4]}" = 'Forward' ]]; then
-        pos_count_forward=$((${pos_count_forward}+1))
-    elif [[ "${array[4]}" = 'Midfielder' ]]; then
-        pos_count_midfielder=$((${pos_count_midfielder}+1))
-    elif [[ "${array[4]}" = 'Defender' ]]; then
-        pos_count_defender=$((${pos_count_defender}+1))
-    else
-        pos_count_goalie=$((${pos_count_goalie}+1))
-    fi
-    # 统计最长最短名字
-    len=${#array[8]}
-    if [[ $len -lt $name_shortest_count ]]; then
-        name_shortest_count=$len
-        name_shortest=${array[8]}
-    elif [[ $len -gt $name_longest_count ]]; then
-        name_longest_count=$len
-        name_longest=${array[8]}
-    fi
-    # 统计年龄最大最小名字
-    if [[ ${array[5]} -lt $age_min ]]; then
-        age_min=${array[5]}
-        age_min_name=${array[8]}
-    elif [[ ${array[5]} -gt $age_max ]]; then
-        age_max=${array[5]}
-        age_max_name=${array[8]}
-    fi
-
-
-done < "$input"
-
-echo "输入文件 [$input]"
-echo "------- 年龄统计 ------- "
-echo "20岁以下球员数量为${age_count_1} ，所占百分比为$(echo "scale=2; ${age_count_1}*100/${count}" | bc)%"
-echo "[20-30]的球员数量为${age_count_2} ，所占百分比为$(echo "scale=2; ${age_count_2}*100/${count}" | bc)%"
-echo "30岁以上的球员数量为${age_count_3} ，所占百分比为$(echo "scale=2; ${age_count_3}*100/${count}" | bc)%"
-echo "------- 位置统计 ------- "
-echo "位置是Forward的球员数量为${pos_count_forward} ，所占百分比为$(echo "scale=2; ${pos_count_forward}*100/${count}" | bc)%"
-echo "位置是Midfielder的球员数量为${pos_count_midfielder} ，所占百分比为$(echo "scale=2; ${pos_count_midfielder}*100/${count}" | bc)%"
-echo "位置是Defender的球员数量为${pos_count_defender} ，所占百分比为$(echo "scale=2; ${pos_count_defender}*100/${count}" | bc)%"
-echo "位置是Goalie的球员数量为${pos_count_goalie} ，所占百分比为$(echo "scale=2; ${pos_count_goalie}*100/${count}" | bc)%"
-echo "------- 最长名字和最短名字 -------"
-echo "最长名字的球员是${name_longest}"
-echo "最短名字的球员是${name_shortest}"
-echo "------- 最大年龄和最小年龄 -------"
-echo "最大年龄是${age_max}，球员是${age_max_name}"
-echo "最小年龄是${age_min}，球员是${age_min_name}"
-```
-
-
-
-```shell
-#!/bin/bash
-
-function age_stats
-{
-	age=$(awk -F '\t' '{print $6}' worldcupplayerinfo.tsv)
-	sum=0
-	a=0
-	b=0
-	c=0
-
-	for n in $age
-	do
-	    if [ "$n" != 'Age' ] ; then
-      		let sum+=1
-
-		if [ "$n" -lt 20 ] ; then 
-		    let a+=1  
-		fi
-
-      		if [ "$n" -ge 20 ] && [ "$n" -le 30 ] ; then 
-		    let b+=1  
-		fi
-
-      		if [ "$n" -gt 30 ] ; then 
-		    let c+=1  
-		fi
-
-            fi
-	done
-
-	ratio1=$(awk 'BEGIN{printf "%.3f",'"$a"*100/"$sum"'}')
-	ratio2=$(awk 'BEGIN{printf "%.3f",'"$b"*100/"$sum"'}')
-	ratio3=$(awk 'BEGIN{printf "%.3f",'"$c"*100/"$sum"'}')
-
-	echo "---------------- # Age Statistics # --------------------"
-	echo "--------------------------------------------------------"
-	echo "|    Age     |    < 20    |    20 ~ 30    |    > 30    |"
-	echo "--------------------------------------------------------"
-	echo "|Total Number|     "$a"      |      "$b"      |    "$c"     |"
-	echo "--------------------------------------------------------"
-	echo "| Proportion |   "$ratio1" "%"  |    "$ratio2" "%"   |  "$ratio3" "%"  |"
-	echo "--------------------------------------------------------" 
-
-
-	temp=$(sort -k6 worldcupplayerinfo.tsv| awk -F'\t' '{print $6 "\t" $9}'|head > target.txt)
- 	min_names=$(more target.txt | awk -F'\t' 'BEGIN{min=100;i=1}{if(min>=$1){min=$1;name[i++]=$2}}END{for(n in name)print name[n]}')
-	min=$(more target.txt | awk -F'\t' 'BEGIN{min=100;i=1}{if(min>=$1){min=$1}}END{print min}')
-	echo "---- # the youngest players ("$min") # ----"
-	echo "$min_names"
-
-	temp=$(sort -k6 -nr worldcupplayerinfo.tsv| awk -F'\t' '{print $6 "\t" $9}'|head > target1.txt)
-	max_names=$(more target1.txt | awk -F'\t' 'BEGIN{max=0;i=1}{if(max<=$1){max=$1;name[i++]=$2}}END{for(n in name)print name[n]}')
-	max=$(more target1.txt | awk -F'\t' 'BEGIN{max=0;i=1}{if(max<=$1){max=$1}}END{print max}')
-	echo "---- # the oldest players ("$max") # ----"
-	echo "$max_names"
-}
-
-
-function position_stats
-{	
-	num=$(sed -n '2, $ p' worldcupplayerinfo.tsv|awk -F '\t' '{print $5}'|sort -r|uniq -c|awk '{print $1}')
-	position=$(sed -n '2, $ p' worldcupplayerinfo.tsv|awk -F '\t' '{print $5}'|sort -r|uniq -c|awk '{print $2}')
-	n=($num)
-	p=($position)
-        
-	sum=0
-	
-	for i in $num
-	do
-	    let sum+=$i
-	done
-
-	i=0
-
-	for n in ${num[@]}
-	do
-	    b["$i"]=$(echo "scale=3; 100*$n / $sum "|bc)
-
- 	    i=$((i+1))
-	done
-	
-
-	echo "---------- # Position Statistics # --------------"
-	echo "-------------------------------------------------"	
-
-
-	i=0
-	p=($position)
-	n=($num)
-	
-	for k in $(seq 0 $(echo "${#n[@]}-1"|bc))
-	do
-	    echo "Position: ${p[$i]}"
-	    echo "Number: ${n[$i]} "
-	    echo "Proportion: ${b[$i]} %"
-	    let i+=1
-	done
-}
-
-function name_stats
-{
-	longest=$(awk -F'\t' 'BEGIN{max=0}{if(length($9)>max){max=length($9);}}END{print max}' worldcupplayerinfo.tsv)
-	long_names=$(awk -F'\t' 'BEGIN{longest='$longest';i=1}{if(length($9)==longest){name[i++]=$9}}END{for(n in name)print name[n]}' worldcupplayerinfo.tsv)
-	shortest=$(awk -F'\t' 'BEGIN{min=100}{if(length($9)<min){min=length($9);}}END{print min}' worldcupplayerinfo.tsv)
-        short_names=$(awk -F'\t' 'BEGIN{shortest='$shortest';i=1}{if(length($9)==shortest){name[i++]=$9}}END{for(n in name)print name[n]}' worldcupplayerinfo.tsv)
-	
-	echo "---- # the players whose name is longest ($longest) ----"
-        echo "${long_names}"
-
-	echo "--- # the players whose name is shortest ($shortest) ---"
-        echo "${short_names}"
-
-
-}
-
-function main
-{
-age_stats
-echo -e
-echo -e
-position_stats
-echo -e
-echo -e
-name_stats
-}
-
-main
-
-
-```
 
 
 
@@ -731,6 +505,12 @@ while true; do
 done
 
 ```
+
+**几个点：**
+
+* 解压.z7文件：
+  1. 安装apt-get install p7zip 	
+  2. 还是没有解压好
 
 ```shell
 # Top 100

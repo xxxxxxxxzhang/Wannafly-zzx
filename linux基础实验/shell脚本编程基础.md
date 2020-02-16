@@ -48,15 +48,15 @@
               echo "  --postfix[postfix]             添加后缀"
             }
             main(){
-              echo "main 函数"
-              echo "H_FLAG:$H_FLAG"
+              #echo "main 函数"
+              #echo "H_FLAG:$H_FLAG"
             if [ $H_FLAG == 1 ] ; then 
-              echo "Help"
+              #echo "Help"
               useage
             fi
             
             if [ ! -d "$DIR" ] ;then
-              echo "没有这个路径"
+              #echo "没有这个路径"
               exit 0
             fi
             
@@ -71,17 +71,17 @@
               command=${command}" -quality "${quality}
             fi
             if [ $R_FLAG == 1 ] ; then 
-              echo "保持原始宽高比的前提下压缩分辨率";
+              #echo "保持原始宽高比的前提下压缩分辨率";
               command=${command}" -resize "${RESOLUTION}
             fi
             if [ $W_FLAG == 1 ] ; then 
-              echo "加水印:${watermark}" 
+              #echo "加水印:${watermark}" 
               command=${command}" -fill white -pointsize 40 -draw 'text 10,50 \"${watermark}\"' "
             fi
             
             if [ $C_FLAG == 1 ] ; then 
               IM_FLAG="2"
-              echo "转换格式"
+              #echo "转换格式"
             fi
             
             
@@ -105,7 +105,7 @@
                  
                  #运行拼凑出来的指令
                  eval $temp     
-                 echo $temp
+                 #echo $temp
             done
             exit 0
             }
@@ -122,15 +122,15 @@
             
             TEMP=`getopt -o cr:d:q:w: --long quality:arga,directory:,watermark:,prefix:,postfix:,help,resize: -n 'test.sh' -- "$@"`
             eval set --"$TEMP";
-            echo "命令：$TEMP"
+            #echo "命令：$TEMP"
             
             while true ; do   
                 case "$1" in
                     -c) C_FLAG=1 ; 
-                    echo "C_FLAG是${C_FLAG}";
+                    #echo "C_FLAG是${C_FLAG}";
                     shift ;;
                     -d|--directory)
-                    	echo "路径：$2"
+                    	#echo "路径：$2"
                     	case "$2" in
                     		"") shift 2 ;;
                          *) DIR=$2 ; echo "新的路径：${DIR}";shift 2 ;;	 
@@ -142,10 +142,10 @@
                         esac ;;
             
                     --help) H_FLAG=1;
-                    	echo "帮助标记:$H_FLAG";shift;;
+                    	#echo "帮助标记:$H_FLAG";shift;;
             
                     -r|--resize) R_FLAG=1; echo "R_FLAG=$R_FLAG";
-                      case "$2" in
+                      	case "$2" in
                             "") shift 2 ;;
                             *)RESOLUTION=$2 ; shift 2 ;;
                         esac ;;
@@ -154,7 +154,7 @@
                      	case "$2" in
                      		"") shift;;
                      		*) watermark=$2;echo "水印：${2}";shift 2;;
-                      esac;;
+                        esac;;
             
                     --prefix) PREFIX=$2;shift 2;;
             
@@ -170,7 +170,7 @@
             ```
             
 
-几个小的点：
+**几个小的点**：
 
 1. 查看图片大小`indentify`：
 
@@ -200,6 +200,8 @@ done
 3. getopt命令可以接受一系列任意形式的命令行选项和参数，并自动将它们转换成适当的格式。格式如下： 
 
 ` getopt optstring parameters `
+
+
 
 * 任务二：用bash编写一个文本批处理脚本，对以下附件分别进行批量处理完成相应的数据统计任务： 
   * 2014世界杯运动员数据
@@ -508,106 +510,11 @@ done
 
 **几个点：**
 
-* 解压.z7文件：
-  1. 安装apt-get install p7zip 	
+* 解压.7z文件：
+  1. 安装apt-get install p7zip Z	
   2. 还是没有解压好
 
-```shell
-# Top 100
 
-echo "------ # Top 100 hosts and according frequencies # -------"
-echo -e
-top100Host=$(more web_log.tsv | awk -F '\t' '{print $1}'| sort | uniq -c | sort -k1 -nr | head -n 100)
-echo "$top100Host"
-
-
-echo "---- # Top 100 hosts' IP and according frequencies # -----"
-echo -e
-top100IP=$(more web_log.tsv | awk -F '\t' '{print $1}' | egrep '[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}' | sort | uniq -c | sort -k1 -nr | head -n 100)
-echo "$top100IP"
-
-
-echo "--- # Top 100 busiest URLs and according frequencies # ---"
-echo -e
-top100URL=$(more web_log.tsv |awk -F '\t' '{print $5}' | sort | uniq -c | sort -k1 -nr | head -n 100)
-echo "$top100URL"
-
-function RespStats
-{
-
-	respCode=$(sed -n '2,$ p' web_log.tsv |awk -F'\t' '{print $6}'| sort | uniq -c | sort -nr | head -n 10 | awk '{print $2}')
-
-	respCount=$(sed -n '2,$ p' web_log.tsv |awk -F'\t' '{print $6}'| sort | uniq -c |sort -nr | head -n 10 | awk '{print $1}')
-
-	code=($respCode)
-	count=($respCount)
-
-	sum=0
-	 for i in $respCount
-	 do
-		sum=$((${sum}+${i}))
-	done
-
-	p=0
-	for k in ${count[@]}
-	do	
-		ratio[${p}]=$(echo "scale=4; 100*${k}/$sum"|bc)
-		let p+=1
-	done
-	
-	echo -e
-	echo -e "----- # Response Code Statistics # -----"
-	echo "----------------------------------------"
-	echo -e
-	for i in $(seq 0 $(echo "${#count[@]}-1"|bc))
-	do
-		echo "Response Code: "${code[${i}]}" "
-		echo "Response Count: "${count[${i}]}" "
-		echo "Proportion: "${ratio[${i}]}" %"
-	done
-	echo -e
-
-
-	# Top10 Url Over 4xx
-	# Top1/our/lover/4xx
-
-	temp=$(more web_log.tsv | awk -F'\t' '{if(substr($6,1,1)==4)print $5"\t"$6}' > target2.txt)
-	codes_type=$(more target2.txt | awk -F'\t' '{print $2}'| sort | uniq -c | awk '{print $2}')
-	codes_count=$(more target2.txt | awk -F'\t' '{print $2}'| sort | uniq -c | awk '{print $1}')
-
-	# 404 403
-	for t in $codes_type
-	do	
-		
-		echo -e "-------# Top 10 urls for response code $t # -------"
-		echo -e
-		echo "| Frequency |"
-		echo -e
-		url=$(more target2.txt | awk -F'\t' '{if($2=='$t')print $1}' | sort | uniq -c | sort -nr | head)	
-		echo "$url"
-		echo -e
-	done
-	
-	
-
-	# Specify a url then find out top 100 hosts ( non-interactive )
-	
-	url="/images/NASA-logosmall.gif"
-	
-	echo -e
-	echo "----- # Top 100 hosts which visited "$url" # ------"
-	echo -e
-	echo "| frequency |"
-	echo -e 
-	hosts=$(more web_log.tsv | awk -F'\t' '{if("'$url'"==$5)print $1}' | sort | uniq -c | sort -k1 -nr |head -n 100)
-	echo "$hosts"
-
-	
-}
-
-RespStats
-
-```
 
 
 

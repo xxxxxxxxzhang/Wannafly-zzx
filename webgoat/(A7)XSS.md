@@ -8,11 +8,11 @@
 
 #### 目标
 
-用户应该对XSS是什么以及它是如何工作的有一个基本的了
+应该对XSS是什么以及它是如何工作的有一个基本的了
 
-用户将了解反映的XSS是什么
+将了解反映的XSS是什么
 
-用户将演示知识:
+将演示知识:
 
 - 反射XSS注入
 - 基于dom的XSS注入
@@ -24,7 +24,7 @@
 
 ##### 跨站点脚本编制(XSS)是最常见和最有害的web应用程序安全性问题
 
-虽然这种攻击有一个众所周知的简单防御方法，但在web上仍然有很多这样的例子。在修复方面，修复的覆盖范围也会成为一个问题。我们稍后会讲到防御。
+虽然这种攻击有一个众所周知的简单防御方法，但在web上仍然有很多这样的例子。在修复方面，修复的覆盖范围也会成为一个问题。
 ##### XSS有显著的影响
 特别是随着“富Internet应用程序”越来越普遍，通过JavaScript链接到的特权函数调用可能会受到影响。如果没有适当的保护，敏感数据(如您的身份验证cookie)可能会被窃取并用于他人的目的。
 **快速的例子:**
@@ -173,7 +173,7 @@ javascript:alert(document.cookie);
 
 ## lesson7
 
-试一试!反射的XSS确定哪些字段容易受到XSS的影响，验证服务器端上的所有输入始终是一个好的实践。当HTTP响应中使用未经验证的用户输入时，可能会发生XSS。在反映的XSS攻击中，攻击者可以使用攻击脚本创建一个URL，然后将其发布到另一个网站，通过电子邮件发送，或者通过其他方式让受害者点击它。查明字段是否容易受到XSS攻击的一种简单方法是使用alert()或console.log()方法。使用其中之一，找出哪些领域是脆弱的。 
+试一试!反射的XSS确定哪些字段容易受到XSS的影响，验证服务器端上的所有输入始终是一个好的实践。当HTTP响应中使用未经验证的用户输入时，可能会发生XSS。在反射的XSS攻击中，攻击者可以使用攻击脚本创建一个URL，然后将其发布到另一个网站，通过电子邮件发送，或者通过其他方式让受害者点击它。查明字段是否容易受到XSS攻击的一种简单方法是使用alert()或console.log()方法。使用其中之一，找出哪些领域是脆弱的。 
 
 要使用alert()检查字段是否容易受到xss攻击，通过尝试可以发现，输入卡号那里是容易收到攻击的。
 
@@ -183,9 +183,48 @@ javascript:alert(document.cookie);
 
 ## lesson10
 
-此题是要寻找一条可以进行dom型的XSS攻击，要找到 JavaScript路由处理程序处理的参数。通过`show hints`的提示看需要看js代码
+####  识别基于dom的XSS的风险 
+
+基于dom的XSS通常可以通过在客户端代码中查找路由配置来找到。寻找一条接收正在“反映”到页面的输入的路径。
+
+对于本例，您需要在路由处理程序中寻找一些“测试”代码(**WebGoat使用 backbone 作为它的主要JavaScript库**)。有时，测试代码会留在生产环境中(通常情况下，测试代码非常简单，缺乏安全性或任何质量控制!)
+
+你的目标是找到路线并利用它。首先，基地路线是什么?举个例子，看看这节课的URL，它应该类似于`/WebGoat/start.mvc#lesson/CrossSiteScripting.lesson/9`。本例中的“基本路线”是: `start.mvc#lesson/`  ，`CrossSiteScripting`之后是由JavaScript路由处理程序处理的参数。
+
+ 那么，在生产期间留在应用程序中的**test**代码的路径是什么?要回答这个问题，您必须检查JavaScript源代码. 
+
+
+
+此题是要寻找一条可以进行dom型的XSS攻击，要找到 JavaScript路由处理程序处理的参数。通过提示看需要看js代码
+
+ 根据提示能看出WebGoat使用backbone ， [Backbone Router路由](https://www.iteye.com/blog/yujianshenbing-1749831) 参考。
+
+```do
+Backbone.Router担任了一部分Controller（控制器）的工作，它一般运行在单页应用中，能将特定的URL或锚点规则绑定到一个指定的方法（后文中称Action）。 
+```
+
+
 
 ![](img/xss10-1.png)
+
+打开代码可以看到，js代码使用的模块化编写的（方便调用）， Backbone.Router.extend() 就是定义的路由路线了，当前的url是`/WebGoat/start.mvc#lesson/CrossSiteScripting.lesson/9`
+
+```
+就是：
+
+:name=CrossSiteScripting.lesson
+
+:pageNum=9
+当前url的路由是start.mvc#lesson
+```
+
+根据这个就能显而易见test代码所处的路由了
+
+**start.mvc#lesson**
+
+
+
+
 
 ![](img/xss10-2.png)
 
@@ -210,6 +249,17 @@ webgoat.customjs.phoneHome ()
 一旦您触发它，随后的响应将带着一个随机数到达您的浏览器控制台。把那个随机数写在下面。
 
 上一道题已经找到了攻击的路径，本题是根据找到的攻击路径进行一个简单的攻击，需要查看js代码。
+
+
+
+**hide hints：**
+
+1. 打开一个新选项卡，并导航到您刚刚在前一课中找到的测试路线 ，
+
+2. 您的url应该类似于http://localhost:8080/webgoat /start.mvc# replace-with-thetestroute /some_parameters 
+3.  请注意您发送给测试路由的参数是如何被反射回页面的。现在将JavaScript添加到其中。 
+4.  您必须使用脚本标记，以便在将JavaScript代码呈现到DOM中时执行 
+5.  将URL参数中的'/'替换为'%2F'。 
 
 ```js
 define(['jquery',

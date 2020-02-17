@@ -6,11 +6,13 @@
 
 本课描述了什么是跨站点脚本(XSS)，以及如何使用它来执行不是开发人员最初意图的任务。
 
+**在网页上嵌入HTML,CSS,JS代码**
+
 #### 目标
 
-应该对XSS是什么以及它是如何工作的有一个基本的了
+应该对XSS是什么以及它是如何工作的有一个基本的了解
 
-将了解反映的XSS是什么
+将了解反射的XSS是什么
 
 将演示知识:
 
@@ -20,7 +22,7 @@
 ## lesson2
 
 #### XSS是什么?
-跨站点脚本(通常也称为XSS)是一个缺陷/缺陷，它将html/脚本标记的许可作为输入，在没有编码或清理的情况下呈现到浏览器中
+ Cross-Site Scripting (通常也称为XSS)是一个缺陷/缺陷，它将html/脚本标记的许可作为输入，在没有编码或清理的情况下呈现到浏览器中
 
 ##### 跨站点脚本编制(XSS)是最常见和最有害的web应用程序安全性问题
 
@@ -106,7 +108,7 @@ javascript:alert(document.cookie);
 #### 跨站脚本攻击，跨站脚本分为三类
 
 1. Reflected XSS Injection 反射型xss（前端-->后端-->前端）
-   通过一个链接产生的xss叫做反射型xss，所有恶意内容都在url中。 
+   通过一个链接产生的xss叫做反射型xss，所有恶意内容都在url中，j经过后端的处理返回到前端。 
 
 2. Stored XSS Injection 存储型xss（前端-->后端-->数据库-->前端）
    所有的恶意内容都在网页中，是攻击者通过漏洞将恶意内容写在数据库中，然后当其他用户访问含有这些恶意数据的网页时，就遭受了攻击。攻击位置常常在留言板，阅读列表等。
@@ -153,7 +155,7 @@ javascript:alert(document.cookie);
 
 
 
-**确定基于DOM的XSS的潜力** 
+**确定基于DOM的XSS的危害** 
 
 通常可以通过在客户端代码中查找路由配置来找到基于DOM的XSS。 寻找一条路由，将输入“反射”到页面上。 
 
@@ -255,11 +257,48 @@ webgoat.customjs.phoneHome ()
 **hide hints：**
 
 1. 打开一个新选项卡，并导航到您刚刚在前一课中找到的测试路线 ，
-
 2. 您的url应该类似于http://localhost:8080/webgoat /start.mvc# replace-with-thetestroute /some_parameters 
 3.  请注意您发送给测试路由的参数是如何被反射回页面的。现在将JavaScript添加到其中。 
 4.  您必须使用脚本标记，以便在将JavaScript代码呈现到DOM中时执行 
 5.  将URL参数中的'/'替换为'%2F'。 
+
+上一个题已经找到了test路由，这就是找到了一个有缺陷的路由的路径，本题就是利用这个路径来实现dom型的xss攻击，首先看一下代码。
+
+**Goatrouter.js:**找到test路由下要执行的函数是这个lessonController.testHandler()
+
+根据模块的定义继续往下找.lessonCOntroller.testHandle()是怎么执行的
+
+
+
+![](img/xss11-3.png)
+
+
+
+![](img/xss11-4.png)
+
+就来到了这里，能看到这个testHandler，有执行了下图这个函数，然后根据模块定义继续往下找
+
+![](img/xss11-5.png)
+
+然后又到了这里，根据模块定义继续找
+
+![](img/xss11-6.png)
+
+这个函数就是返回了一个jquery的对象，指定了html的内容。
+
+```js
+el:'#lesson-content-wrapper', //TODO << get this fixed up in DOM
+```
+
+
+
+
+
+![](img/xss11-7.png)
+
+
+
+
 
 ```js
 define(['jquery',
@@ -402,3 +441,10 @@ define(['jquery',
 
 
 
+
+
+# 参考
+
+[浅析DOM型XSS]( [https://www.mi1k7ea.com/2019/06/25/%E6%B5%85%E6%9E%90DOM%E5%9E%8BXSS/](https://www.mi1k7ea.com/2019/06/25/浅析DOM型XSS/) )
+
+[jQuery选择器]( https://www.liaoxuefeng.com/wiki/1022910821149312/1023023555539648 )

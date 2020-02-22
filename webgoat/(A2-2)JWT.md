@@ -1,4 +1,8 @@
-# 基础概念
+# JWT tokens
+
+## lesson1
+
+
 
 ## 什么是token
 
@@ -18,13 +22,77 @@ token是计算机术语：令牌，令牌是一种能够控制站点占有媒体
 
 6.服务端收到请求，然后去验证客户端请求里面带着的 Token，如果验证成功，就向客户端返回请求的数据
 
-##  JSON Web Token（JWT）
+## lesson2
+
+#### JSON Web Token（JWT）
 
  JSON Web Token（JWT）是目前最流行的跨域身份验证解决方案。
 
 JSON Web Token (JWT)是一个开放标准(RFC 7519)，它定义了一种紧凑的、自包含的方式，用于作为JSON对象在各方之间安全地传输信息。该信息可以被验证和信任，因为它是数字签名的。 
 
-一条JWT是被base64编码过的，包含了三段，头部，声明（也称payload），签名。中间以“.”间隔。
+一条JWT是被base64编码过的，包含了三段：头部，声明（也称payload），签名。中间以“.”间隔。
+
+1. **JWT头**
+
+JWT头部分是一个描述JWT元数据的JSON对象，通常如下所示。
+
+{
+
+"alg": "HS256",
+
+"typ": "JWT"
+
+}
+
+在上面的代码中，alg属性表示签名使用的算法，默认为HMAC SHA256（写为HS256）；typ属性表示令牌的类型，JWT令牌统一写为JWT。
+
+最后，使用Base64 URL算法将上述JSON对象转换为字符串保存。
+
+2. **有效载荷**
+
+有效载荷部分，是JWT的主体内容部分，也是一个JSON对象，包含需要传递的数据。 JWT指定七个默认字段供选择。
+
+iss：发行人
+
+exp：到期时间
+
+sub：主题
+
+aud：用户
+
+nbf：在此之前不可用
+
+iat：发布时间
+
+jti：JWT ID用于标识该JWT
+
+除以上默认字段外，我们还可以自定义私有字段，如下例：
+
+{
+
+"sub": "1234567890",
+
+"name": "chongchong",
+
+"admin": true
+
+}
+
+请注意，默认情况下JWT是未加密的，任何人都可以解读其内容，因此不要构建隐私信息字段，存放保密信息，以防止信息泄露。
+
+JSON对象也使用Base64 URL算法转换为字符串保存。
+
+3. **签名哈希**
+
+签名哈希部分是对上面两部分数据签名，通过指定的算法生成哈希，以确保数据不会被篡改。
+
+首先，需要指定一个密码（secret）。该密码仅仅为保存在服务器中，并且不能向用户公开。然后，使用标头中指定的签名算法（默认情况下为HMAC SHA256）根据以下公式生成签名。
+
+HMACSHA256(base64UrlEncode(header) + "." + base64UrlEncode(payload),
+
+secret)
+
+在计算出签名哈希后，JWT头，有效载荷和签名哈希的三个部分组合成一个字符串，每个部分用"."分隔，就构成整个JWT对象。
 
 
 
@@ -56,7 +124,9 @@ JSON Web Token (JWT)是一个开放标准(RFC 7519)，它定义了一种紧凑�
 qxNjYSPIKSURZEMqLQQPw1Zdk6Le2FdGHRYZG7SQnNk
 ```
 
-### 和Session方式存储id的差异
+
+
+#### 和Session方式存储id的差异
 
 Session方式存储用户id的最大弊病在于要占用大量服务器内存，对于较大型应用而言可能还要保存许多的状态。一般而言，大型应用还需要借助一些KV数据库和一系列缓存机制来实现Session的存储。
 
@@ -66,13 +136,13 @@ Session方式存储用户id的最大弊病在于要占用大量服务器内存�
 
 它是服务器群集或面向服务的跨域体系结构的话，则需要一个统一的session数据库库来保存会话数据实现共享，这样负载均衡下的每个服务器才可以正确的验证用户身份。
 
-## base64算法和url算法
+#### base64url算法
 
 
 
+## lesson6
 
-
-## 更新访问令牌
+#### 更新访问令牌
 
  通常，令牌有两种类型：访问令牌和刷新令牌。 
 
@@ -86,7 +156,7 @@ Session方式存储用户id的最大弊病在于要占用大量服务器内存�
 
 每当攻击者获得访问令牌的保留权时，它仅在一定时间内有效（例如10分钟）。 然后，攻击者需要刷新令牌才能获取新的访问令牌。  这就是为什么刷新令牌需要更好的保护。 也可以使刷新令牌无状态，但这意味着查看用户是否吊销令牌将变得更加困难。  服务器进行所有验证后，它必须向客户端返回一个新的刷新令牌和一个新的访问令牌。 客户端可以使用新的访问令牌进行API调用
 
-# (A2）Broken Authentication
+# Broken Authentication
 
 ## Authentication Bypasses
 
@@ -116,23 +186,43 @@ Session方式存储用户id的最大弊病在于要占用大量服务器内存�
 
 <img src="img/2FA-q.png" />
 
-<img src="img/2FA-a.png" style="zoom:80%;" />*
+<img src="img/2FA-a.png" style="zoom:80%;" />
+
+# JWT token解题
 
 
 
-## JWT tokens
+## lesson 4
 
-* lesson 4
-
-**JWT signing**
+#### JWT signing
 
  每个JWT令牌至少应在发送给客户端之前进行签名，如果未签名，则客户端应用程序将能够更改令牌的内容。  签名规范在此处定义，此处将描述您可以使用的特定算法。从本质上讲，您可以使用“具有SHA-2功能的HMAC”或“具有`RSASSA-PKCS1-v1_5 / ECDSA / RSASSA-PSS`的数字签名”功能对 令牌。 
 
+ **检查签名** 
+
 一开始先以用户的身份登入查看一下结果，然后点击刷新的符号发现是没有权限的，用bp也拦截不到请求，然后试一下删除按钮也是权限不够但是能够拦截到请求，这就可以禅师从删除的请求下手。
+
+hide hints:
+
+1. 选择一个不同的用户并查看您收到的返回令牌，使用delete按钮重置投票计数 
+
+2.  解码令牌并查看其内容 
+
+3.  在发送获取投票的请求之前，更改令牌的内容并替换cookie 
+
+4.  将令牌中的admin字段更改为true 
+
+5.  通过将算法更改为None并删除签名来提交令牌
+
+    
 
 以tom身份登录，点击删除按钮，用bp拦截请求能看到access_token的参数，把拦截到JWT token去` https://jwt.io/#debugger `解析一下能看到`pyload`中`admin`字段的值是`false`，改成`true`。用新生成的token去重放攻击即可。
 
-* lesson5
+
+
+## lesson5
+
+
 
 **JWT cracking**
 
@@ -236,15 +326,23 @@ print(jwt_token)
 
 
 
-lesson7
+## lesson7
 
-**Refreshing a token**
+
+
+#### Refreshing a token
 
 访问令牌可以通过刷新令牌获取，此题是在通过刷新令牌获取访问令牌时没有检查刷新令牌和访问令牌的关联，这样就可以让我拿着自己的刷新令牌去刷新别人的访问令牌。因此，攻击者就可能获取旧的访问令牌。
 
 任务：
 
 通过去年的日志找到一种方法来订购这些书，让tom来支付
+
+用bp拦截
+
+![](img/jwt-re.png)
+
+![](img/jwt-ref2.png)
 
 解决方案：
 
@@ -254,21 +352,35 @@ lesson7
 
 ![refesh-token-3](img/refesh-token-3.png)
 
-不用签名字段是，在发送清酒把token签名字段删掉不需要签名字段就可以，**但是.不能去掉**
+不用签名字段，在发送清酒把token签名字段删掉不需要签名字段就可以，**但是.不能去掉**
 
 ![refesh-token-1](D:\github-repositories\Wannafly-zzx\webgoat\img\refesh-token-1.png)
 
-2.点击check'out用bp拦截checkout请求，修好Authonization字段
+2.点击checkout用bp拦截checkout请求，修改Authonization字段
 
 ![refesh-token-2](img\refesh-token-2.png)
 
-## Final challenges
+## lesson8
 
-题目中要求Jerry删除Tom 的账户，解题思路：
+#### Final challenges
+
+
+
+hide hints:
+
+1.  看一下标记，特别是头部 
+
+2. “kid”(密钥ID)头参数是一个提示，指示使用哪个密钥来保护JWS 
+3.  密钥可以位于内存中的文件系统上，甚至驻留在数据库中 
+4.  密钥存储在数据库中，并在验证令牌时加载 
+5.  使用SQL注入，您可能能够操作您所知道的密钥并创建一个新的令牌 
+6.  使用:破解' UNION select 'deletingTom' from INFORMATION_SCHEMA.SYSTEM_USERS——作为报头中的kids，将令牌的内容更改为Tom并使用新令牌攻击端点 题目中要求Jerry删除Tom 的账户，解题思路：
 
 要删除Tom的账户就要伪造Tom的token
 
-点击tom账户的delete按钮用bp拦截请求看看交互内容，是发送了一个post的侵害就，url里附带了当前账户的token，由于这个token不是tom的所以在删除Tom账户的时候提示错误：
+点击tom账户的delete按钮用bp拦截请求看看交互内容，是发送了一个post的请求，url里附带了当前账户的token，由于这个token不是tom的所以在删除Tom账户的时候提示错误：
+
+![](img/jwt-fianl.png)
 
 把token解析可以看到头部有一个kid字段
 
@@ -306,15 +418,13 @@ Jwt jwt = Jwts.parser().setSigningKeyResolver(new SigningKeyResolverAdapter() {.
 fff' union select 'enp6' FROM jwt_keys where id='webgoat_key
 ```
 
-
-
 服务器组合后的语句
 
 ```sql
 "SELECT key FROM jwt_keys WHERE id = 'fff' union select 'enp6' FROM jwt_keys where id='webgoat_key'"
 ```
 
- 因为fff这个id不存在，所以只会返回union后的select结果也就是enp6，这个enp6是base64加密后的zzz，因为webgoat代码里很显然是把数据库查询的结果做了一个decode，反推一下数据库里面存的应该是base64后的值。
+ **因为fff这个id不存在，所以只会返回union后的select结果也就是enp6，这个enp6是base64加密后的zzz，因为webgoat代码里很显然是把数据库查询的结果做了一个decode，反推一下数据库里面存的应该是base64后的值**。
 
 然后重新base64和签名，修改为Tom的账户，
 
@@ -343,3 +453,6 @@ fff' union select 'enp6' FROM jwt_keys where id='webgoat_key
 https://www.jianshu.com/p/d2f9815758f4 
 
 [JWT Refresh Token Manipulation](https://emtunc.org/blog/11/2017/jwt-refresh-token-manipulation/ ) 
+
+[cookie session token]( https://juejin.im/post/5de4c3c76fb9a071b86cc482 )
+

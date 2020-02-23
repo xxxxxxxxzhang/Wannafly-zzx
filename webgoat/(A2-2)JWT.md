@@ -218,7 +218,16 @@ hide hints:
 
 以tom身份登录，点击删除按钮，用bp拦截请求能看到access_token的参数，把拦截到JWT token去` https://jwt.io/#debugger `解析一下能看到`pyload`中`admin`字段的值是`false`，改成`true`。用新生成的token去重放攻击即可。
 
+#### 总结清单
 
+* 考核点清单
+  1. 获取普通用户的JWT token
+  2. 修改用户的权限 admin改为true
+
+* 漏洞点清单
+  1. 利用普通用户去获得
+* 漏洞利用效果
+  1. 拥有管理员的操作权限
 
 ## lesson5
 
@@ -324,7 +333,19 @@ print(jwt_token)
 
 ```
 
+#### 总结清单
 
+* 考核点清单
+  1. 获取普通用户的JWT token
+  2. 利用密钥爆破的方式去获取JWT token的签名密钥
+  3. 修改token然后用密钥重新加密
+  4. 时间戳要在有效范围内
+
+* 漏洞点清单
+  1. 利用普通用户去获得token
+  2. 获取签名密钥后可随意改变token
+* 漏洞利用效果
+  1. 任意伪造token
 
 ## lesson7
 
@@ -359,6 +380,17 @@ print(jwt_token)
 2.点击checkout用bp拦截checkout请求，修改Authonization字段
 
 ![refesh-token-2](img\refesh-token-2.png)
+
+#### 总结清单
+
+* 考核点清单
+  1. 通过日志获取tom两年前的token
+  2. 利用自己的刷新token刷新出tom的token
+
+* 漏洞点清单
+  1. 利用已有的刷新token刷新出任意用户的token
+* 漏洞利用效果
+  1. 获取被攻击者token
 
 ## lesson8
 
@@ -438,6 +470,19 @@ fff' union select 'enp6' FROM jwt_keys where id='webgoat_key
 
 ![tom-final3](img/tom-final3.png)
 
+#### 总结清单
+
+* 考核点清单
+  1. 获取普通用户的JWT token
+  2. 通过sql注入任意修改签名密钥
+  3. 签名是利用url编码的
+
+* 漏洞点清单
+  1. sql注入修改签名密钥
+  2. 利用自己的token伪造别人的token
+* 漏洞利用效果
+  1. 拥有其他用户的操作权限
+
 # 参考
 
 
@@ -450,7 +495,7 @@ fff' union select 'enp6' FROM jwt_keys where id='webgoat_key
 
 [负载均衡器]( https://zhuanlan.zhihu.com/p/32841479 )
 
-https://www.jianshu.com/p/d2f9815758f4 
+[WebGoat之身份验证缺陷](https://www.jianshu.com/p/d2f9815758f4 )
 
 [JWT Refresh Token Manipulation](https://emtunc.org/blog/11/2017/jwt-refresh-token-manipulation/ ) 
 

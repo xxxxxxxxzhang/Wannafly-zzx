@@ -402,15 +402,20 @@ http://192.168.56.101:9090/files/xinxin/test.dtd"> % remote;]>
 
    [XML_External_Entity_Prevention_Cheat_Sheet.md]( https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.md )
 
-# 漏洞练习总结清单
+4. 伪协议： [文件包含漏洞与PHP伪协议](https://www.smi1e.top/文件包含漏洞与php伪协议/) 
+5. URI
 
-## 考核点清单
+# 总结清单
 
+* 考核点清单
+  1. 获取本地的文件目录
+  2. 获取本地指定文件的内容
 
+* 漏洞点清单
+  1. 有回显的利用内部实体攻击
+  2. 没有回显的需要借助本地服务器，通过请求来查看攻击效果
 
-## 漏洞点清单
-
-
-
-## 漏洞利用效果
+* 漏洞利用效果
+  1. 实现对攻击者的本地文件扫描
+  2. 获取本地文件
 

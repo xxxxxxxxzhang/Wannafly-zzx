@@ -137,6 +137,5 @@ POST /csrf/feedback/message HTTP/1.1
 }
 ```
 
- 记住，你需要从另一个地方call  	WebWolf可以帮忙)，你需要登录到WebGoat 
+ 记住，你需要从另一个地方call  	WebWolf可以帮忙，你需要登录到WebGoat 
 
-- 
